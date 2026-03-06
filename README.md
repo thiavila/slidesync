@@ -6,6 +6,16 @@ Built by a professor, for professors.
 
 **Inspired by [Remote for Slides](https://limhenry.xyz/slides/) by [Henry Lim](https://limhenry.xyz/).** This project wouldn't exist without his work. [Support him on Patreon](https://www.patreon.com/remoteforslides) — he deserves it.
 
+## Origin Story
+
+This project was born from two frustrations and one observation:
+
+1. **Remote for Slides didn't go fullscreen.** As a professor, presenting without true fullscreen mode was a constant annoyance — it was one of the reasons I stopped using it. Slide Sync auto-enters fullscreen on the first interaction and re-enters if you accidentally exit.
+
+2. **Students couldn't see the slides properly.** My student Maria Luisa was always taking photos of the slides during class with her phone. That made me think: what if the slides just appeared on her phone automatically, in real-time?
+
+3. **Screenshots > Thumbnails.** By capturing screenshots instead of fetching thumbnails from the Google Slides API, we get animations for free — every click updates the image, so bullet points appearing one by one just work.
+
 ## How It Works
 
 1. Professor opens Google Slides and clicks **"Present w/ Slide Sync"**
