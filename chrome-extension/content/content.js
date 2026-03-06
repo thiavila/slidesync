@@ -1,219 +1,219 @@
 (() => {
-  let lastSlide = null;
-  let config = null;
+  // Only run on edit pages (not present pages)
+  const isEditPage = window.location.href.includes("/edit");
+  const isPresentPage = window.location.href.includes("/present");
 
-  async function loadConfig() {
-    return new Promise((resolve) => {
-      chrome.storage.local.get(
-        ["sessionId", "apiUrl", "extensionSecret"],
-        (result) => {
-          if (result.sessionId && result.apiUrl && result.extensionSecret) {
-            config = result;
-            resolve(true);
-          } else {
-            resolve(false);
-          }
-        }
-      );
-    });
+  if (isPresentPage) {
+    // On present page: detect slide changes and notify background
+    initPresentMode();
+    return;
   }
 
-  function getSlideNumberFromHash() {
-    const hash = window.location.hash;
-    // Google Slides uses hashes like:
-    // #slide=id.p       (slide 1)
-    // #slide=id.p2      (slide 2... but sometimes 0-indexed)
-    // #slide=id.g1234   (custom object id)
-    // #slide=id.i0      (slide index 0)
-
-    // Try direct number after 'p'
-    const pMatch = hash.match(/slide=id\.p(\d+)/);
-    if (pMatch) {
-      // Google sometimes uses 0-indexed, sometimes 1-indexed
-      const num = parseInt(pMatch[1], 10);
-      return num === 0 ? 1 : num;
-    }
-
-    // First slide: #slide=id.p
-    if (/slide=id\.p$/.test(hash)) {
-      return 1;
-    }
-
-    return null;
+  if (isEditPage) {
+    // On edit page: inject the Slide Sync UI
+    initEditMode();
+    return;
   }
 
-  function getSlideNumberFromDOM() {
-    // Method 1: Look for the current slide indicator in presenter view
-    const navText = document.querySelector(
-      '[class*="punch-viewer-page-indicator"],' +
-      '[class*="punch-viewer-slide-number"],' +
-      '[aria-label*="Slide "]'
-    );
-    if (navText) {
-      const text = navText.textContent || navText.getAttribute("aria-label") || "";
-      const match = text.match(/(\d+)\s*(?:\/|of|de)\s*(\d+)/);
-      if (match) return parseInt(match[1], 10);
-      const simpleMatch = text.match(/(\d+)/);
-      if (simpleMatch) return parseInt(simpleMatch[1], 10);
-    }
+  // ===== PRESENT MODE =====
+  function initPresentMode() {
+    let lastSlide = null;
 
-    // Method 2: Count SVG groups that represent slides in the filmstrip
-    const filmstrip = document.querySelector('[class*="punch-filmstrip"]');
-    if (filmstrip) {
-      const items = filmstrip.querySelectorAll('[aria-selected="true"]');
-      if (items.length > 0) {
-        const allItems = filmstrip.querySelectorAll('[role="option"], [role="tab"], [aria-roledescription="slide"]');
-        for (let i = 0; i < allItems.length; i++) {
-          if (allItems[i].getAttribute("aria-selected") === "true") {
+    function getSlideNumber() {
+      const hash = window.location.hash;
+      const pMatch = hash.match(/slide=id\.p(\d+)/);
+      if (pMatch) {
+        const num = parseInt(pMatch[1], 10);
+        return num === 0 ? 1 : num;
+      }
+      if (/slide=id\.p$/.test(hash)) return 1;
+
+      // DOM fallback
+      const allSlides = document.querySelectorAll('[aria-roledescription="slide"]');
+      if (allSlides.length > 0) {
+        for (let i = 0; i < allSlides.length; i++) {
+          if (allSlides[i].getAttribute("aria-hidden") !== "true") {
             return i + 1;
           }
         }
       }
+      return lastSlide || 1;
     }
 
-    // Method 3: Look for aria-roledescription="slide" and find visible one
-    const allSlides = document.querySelectorAll('[aria-roledescription="slide"]');
-    if (allSlides.length > 0) {
-      for (let i = 0; i < allSlides.length; i++) {
-        const style = window.getComputedStyle(allSlides[i]);
-        if (style.display !== "none" && style.visibility !== "hidden" &&
-            allSlides[i].getAttribute("aria-hidden") !== "true") {
-          return i + 1;
-        }
+    function checkSlide() {
+      const current = getSlideNumber();
+      if (current !== lastSlide) {
+        lastSlide = current;
+        // Ask background to capture screenshot
+        chrome.runtime.sendMessage({
+          type: "capture-slide",
+          slideNumber: current,
+        });
+      } else {
+        // Same slide but might be animation update
+        chrome.runtime.sendMessage({
+          type: "capture-slide",
+          slideNumber: current,
+        });
       }
     }
 
-    // Method 4: Parse from URL query params
-    const url = new URL(window.location.href);
-    const slideParam = url.searchParams.get("slide");
-    if (slideParam) {
-      const match = slideParam.match(/(\d+)/);
-      if (match) return parseInt(match[1], 10);
-    }
-
-    return null;
-  }
-
-  function getSlideFromSVGTransform() {
-    // In full-screen presentation mode, Google Slides uses SVG transforms
-    // to position slides. The visible slide has a specific transform.
-    const svgSlides = document.querySelectorAll('.punch-viewer-content [data-slide-id]');
-    if (svgSlides.length > 0) {
-      for (let i = 0; i < svgSlides.length; i++) {
-        const rect = svgSlides[i].getBoundingClientRect();
-        // The visible slide is within the viewport
-        if (rect.width > 0 && rect.height > 0 &&
-            rect.left >= -10 && rect.top >= -10 &&
-            rect.left < window.innerWidth && rect.top < window.innerHeight) {
-          return i + 1;
-        }
-      }
-    }
-    return null;
-  }
-
-  function getCurrentSlide() {
-    return getSlideNumberFromHash() ||
-           getSlideNumberFromDOM() ||
-           getSlideFromSVGTransform() ||
-           lastSlide ||
-           1;
-  }
-
-  async function sendSlideUpdate(slideNumber) {
-    if (!config) return;
-
-    console.log("[Slide Sync] Sending slide update:", slideNumber);
-    chrome.runtime.sendMessage(
-      {
-        type: "updateSlide",
-        apiUrl: config.apiUrl,
-        sessionId: config.sessionId,
-        currentSlide: slideNumber,
-        extensionSecret: config.extensionSecret,
-      },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          console.warn("[Slide Sync] Message error:", chrome.runtime.lastError.message);
-          return;
-        }
-        if (response && response.ok) {
-          console.log("[Slide Sync] Slide updated to:", slideNumber);
-        } else {
-          console.warn("[Slide Sync] API error:", response?.error);
-        }
-      }
-    );
-  }
-
-  function checkSlideChange() {
-    const current = getCurrentSlide();
-    if (current !== null && current !== lastSlide) {
-      console.log("[Slide Sync] Slide changed:", lastSlide, "->", current);
-      lastSlide = current;
-      sendSlideUpdate(current);
-      chrome.storage.local.set({ currentSlide: current });
-    }
-  }
-
-  async function init() {
-    const hasConfig = await loadConfig();
-    if (!hasConfig) {
-      console.log("[Slide Sync] Not configured. Open the extension popup to connect.");
-      // Keep checking for config
-      const configInterval = setInterval(async () => {
-        const ready = await loadConfig();
-        if (ready) {
-          clearInterval(configInterval);
-          startTracking();
-        }
-      }, 2000);
-      return;
-    }
-
-    startTracking();
-  }
-
-  function startTracking() {
-    console.log("[Slide Sync] Active for session:", config.sessionId);
-
-    // Listen for hash changes
-    window.addEventListener("hashchange", () => {
-      setTimeout(checkSlideChange, 50);
-    });
-
-    // Listen for keyboard navigation
+    // Listen for navigation
+    window.addEventListener("hashchange", () => setTimeout(checkSlide, 100));
     document.addEventListener("keydown", (e) => {
-      // Arrow keys, space, page up/down, enter
       if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown",
            " ", "PageUp", "PageDown", "Enter", "Backspace"].includes(e.key)) {
-        setTimeout(checkSlideChange, 200);
+        setTimeout(checkSlide, 300);
+      }
+    });
+    document.addEventListener("click", () => setTimeout(checkSlide, 300));
+
+    // Initial capture after a short delay for rendering
+    setTimeout(checkSlide, 1000);
+
+    // Polling every 2s as fallback
+    setInterval(checkSlide, 2000);
+
+    console.log("[Slide Sync] Present mode active");
+  }
+
+  // ===== EDIT MODE =====
+  function initEditMode() {
+    // Wait for Google Slides UI to load
+    const waitForUI = setInterval(() => {
+      const menuBar = document.querySelector('#docs-menubars');
+      if (menuBar) {
+        clearInterval(waitForUI);
+        injectUI();
+      }
+    }, 500);
+
+    function injectUI() {
+      // Create banner
+      const banner = document.createElement("div");
+      banner.id = "slidesync-banner";
+      banner.innerHTML = `
+        <span>📡 Slide Sync disponivel</span>
+        <button id="slidesync-open-panel">Apresentar com Slide Sync</button>
+        <button class="close-btn" id="slidesync-close-banner">✕</button>
+      `;
+      document.body.appendChild(banner);
+
+      // Create panel
+      const panel = document.createElement("div");
+      panel.id = "slidesync-panel";
+      panel.className = "hidden";
+      panel.innerHTML = `
+        <h2>Slide Sync</h2>
+        <p class="subtitle">Compartilhe seus slides em tempo real</p>
+        <label style="font-size:12px;color:#5f6368;display:block;margin-bottom:4px;">Servidor PartyKit</label>
+        <input type="text" class="server-input" id="slidesync-server"
+               placeholder="localhost:1999" value="localhost:1999" />
+        <div class="room-code">
+          <div class="label">Codigo da sala</div>
+          <div class="code" id="slidesync-code">------</div>
+        </div>
+        <div class="status">
+          <span class="dot inactive" id="slidesync-dot"></span>
+          <span id="slidesync-status">Desconectado</span>
+        </div>
+        <button class="btn-present" id="slidesync-start">Iniciar apresentacao</button>
+        <button class="btn-stop hidden" id="slidesync-stop" style="display:none;">Encerrar sessao</button>
+      `;
+      document.body.appendChild(panel);
+
+      // Load saved server
+      chrome.storage.local.get(["partyServer"], (result) => {
+        if (result.partyServer) {
+          document.getElementById("slidesync-server").value = result.partyServer;
+        }
+      });
+
+      // Event listeners
+      document.getElementById("slidesync-open-panel").addEventListener("click", () => {
+        panel.classList.toggle("hidden");
+      });
+
+      document.getElementById("slidesync-close-banner").addEventListener("click", () => {
+        banner.classList.add("hidden");
+      });
+
+      document.getElementById("slidesync-start").addEventListener("click", startSession);
+      document.getElementById("slidesync-stop").addEventListener("click", stopSession);
+    }
+
+    function generateRoomCode() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    function startSession() {
+      const server = document.getElementById("slidesync-server").value.trim();
+      if (!server) return;
+
+      const roomCode = generateRoomCode();
+      const protocol = server.startsWith("localhost") ? "ws" : "wss";
+      const wsUrl = `${protocol}://${server}/party/${roomCode}`;
+
+      // Save config
+      chrome.storage.local.set({
+        partyServer: server,
+        roomCode: roomCode,
+        wsUrl: wsUrl,
+        isActive: true,
+      });
+
+      // Tell background to connect
+      chrome.runtime.sendMessage({
+        type: "start-session",
+        wsUrl: wsUrl,
+        roomCode: roomCode,
+      });
+
+      // Update UI
+      document.getElementById("slidesync-code").textContent = roomCode;
+      document.getElementById("slidesync-dot").classList.remove("inactive");
+      document.getElementById("slidesync-status").textContent = "Ativo - aguardando apresentacao";
+      document.getElementById("slidesync-start").style.display = "none";
+      document.getElementById("slidesync-stop").style.display = "block";
+      document.getElementById("slidesync-server").disabled = true;
+
+      // Open presentation in new window
+      const presentUrl = window.location.href.replace("/edit", "/present");
+      window.open(presentUrl, "_blank", "width=1280,height=720");
+    }
+
+    function stopSession() {
+      chrome.runtime.sendMessage({ type: "stop-session" });
+      chrome.storage.local.remove(["roomCode", "wsUrl", "isActive"]);
+
+      // Reset UI
+      document.getElementById("slidesync-code").textContent = "------";
+      document.getElementById("slidesync-dot").classList.add("inactive");
+      document.getElementById("slidesync-status").textContent = "Desconectado";
+      document.getElementById("slidesync-start").style.display = "block";
+      document.getElementById("slidesync-stop").style.display = "none";
+      document.getElementById("slidesync-server").disabled = false;
+    }
+
+    // Check if there's already an active session
+    chrome.storage.local.get(["roomCode", "isActive"], (result) => {
+      if (result.isActive && result.roomCode) {
+        // Restore UI state
+        setTimeout(() => {
+          const codeEl = document.getElementById("slidesync-code");
+          if (codeEl) {
+            codeEl.textContent = result.roomCode;
+            document.getElementById("slidesync-dot").classList.remove("inactive");
+            document.getElementById("slidesync-status").textContent = "Ativo";
+            document.getElementById("slidesync-start").style.display = "none";
+            document.getElementById("slidesync-stop").style.display = "block";
+            document.getElementById("slidesync-server").disabled = true;
+            document.getElementById("slidesync-panel").classList.remove("hidden");
+          }
+        }, 1500);
       }
     });
 
-    // Listen for click navigation
-    document.addEventListener("click", () => {
-      setTimeout(checkSlideChange, 200);
-    });
-
-    // Polling fallback every 1 second (more responsive)
-    setInterval(checkSlideChange, 1000);
-
-    // Initial check
-    checkSlideChange();
+    console.log("[Slide Sync] Edit mode - UI injected");
   }
-
-  // Listen for config changes
-  chrome.storage.onChanged.addListener((changes) => {
-    if (changes.sessionId || changes.apiUrl || changes.extensionSecret) {
-      loadConfig().then((hasConfig) => {
-        if (hasConfig) {
-          console.log("[Slide Sync] Config updated, re-syncing.");
-          checkSlideChange();
-        }
-      });
-    }
-  });
-
-  init();
 })();

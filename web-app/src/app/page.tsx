@@ -13,21 +13,16 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="space-y-4">
-          <Link
-            href="/join"
-            className="block w-full py-4 px-6 bg-blue-600 text-white text-lg font-medium rounded-lg hover:bg-blue-700 transition"
-          >
-            Entrar na aula
-          </Link>
+        <Link
+          href="/join"
+          className="block w-full py-4 px-6 bg-blue-600 text-white text-lg font-medium rounded-lg hover:bg-blue-700 transition"
+        >
+          Entrar na aula
+        </Link>
 
-          <Link
-            href="/dashboard"
-            className="block w-full py-4 px-6 bg-white text-gray-700 text-lg font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition"
-          >
-            Sou professor
-          </Link>
-        </div>
+        <p className="text-xs text-gray-400">
+          Professor? Instale a extensao do Chrome para comecar.
+        </p>
       </div>
     </main>
   );

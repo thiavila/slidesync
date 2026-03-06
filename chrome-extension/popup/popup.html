@@ -8,36 +8,27 @@
   <div class="container">
     <h1>Slide Sync</h1>
 
-    <div id="disconnected-view">
-      <div class="field">
-        <label for="apiUrl">Servidor</label>
-        <input type="text" id="apiUrl" placeholder="http://localhost:3000" />
+    <div id="inactive-view">
+      <div class="status disconnected">
+        <span class="dot"></span>
+        Sem sessao ativa
       </div>
-      <div class="field">
-        <label for="roomCode">Codigo da sala</label>
-        <input type="text" id="roomCode" placeholder="123456" maxlength="6" inputmode="numeric" />
-      </div>
-      <button id="connectBtn" class="btn btn-primary">Conectar</button>
-      <p id="error" class="error"></p>
+      <p class="hint">Abra uma apresentacao no Google Slides para comecar.</p>
     </div>
 
-    <div id="connected-view" class="hidden">
+    <div id="active-view" class="hidden">
       <div class="status connected">
         <span class="dot"></span>
-        Conectado
+        Sessao ativa
       </div>
-      <div class="info">
-        <p class="title" id="sessionTitle"></p>
-        <div class="info-row">
-          <span class="label">Sala</span>
-          <span id="connectedCode" class="value"></span>
-        </div>
-        <div class="info-row">
-          <span class="label">Slide atual</span>
-          <span id="currentSlide" class="value">-</span>
-        </div>
+      <div class="room-code">
+        <div class="label">Codigo da sala</div>
+        <div class="code" id="roomCode">------</div>
       </div>
-      <button id="disconnectBtn" class="btn btn-danger">Desconectar</button>
+      <div class="info-row">
+        <span class="label">Slide atual</span>
+        <span id="currentSlide" class="value">-</span>
+      </div>
     </div>
   </div>
   <script src="popup.js"></script>

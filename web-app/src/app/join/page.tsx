@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import RoomCodeInput from "@/components/room-code-input";
 import Link from "next/link";
 
@@ -11,24 +10,9 @@ export default function JoinPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(code: string) {
+  function handleSubmit(code: string) {
     setLoading(true);
     setError(null);
-
-    const supabase = createClient();
-    const { data: session, error: err } = await supabase
-      .from("sessions")
-      .select("id, room_code")
-      .eq("room_code", code)
-      .eq("status", "active")
-      .single();
-
-    if (err || !session) {
-      setError("Sala nao encontrada ou aula encerrada");
-      setLoading(false);
-      return;
-    }
-
     router.push(`/session/${code}`);
   }
 

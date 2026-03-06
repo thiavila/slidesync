@@ -1,57 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { useRealtimeSession } from "@/hooks/use-realtime-session";
+import usePartySocket from "partysocket/react";
 import SlideViewer from "@/components/slide-viewer";
-import type { SlideImage } from "@/types/database";
+
+const PARTY_HOST =
+  process.env.NEXT_PUBLIC_PARTYKIT_HOST || "localhost:1999";
 
 export default function StudentSessionPage() {
   const params = useParams();
   const roomCode = params.roomCode as string;
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [slides, setSlides] = useState<SlideImage[]>([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const { session, error: realtimeError } = useRealtimeSession(sessionId);
+  const [slides, setSlides] = useState<Map<number, string>>(new Map());
+  const [currentSlide, setCurrentSlide] = useState(1);
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const slidesRef = useRef(slides);
+  slidesRef.current = slides;
 
-  useEffect(() => {
-    async function loadSession() {
-      const supabase = createClient();
+  const ws = usePartySocket({
+    host: PARTY_HOST,
+    room: roomCode,
+    onOpen() {
+      setConnected(true);
+      setError(null);
+    },
+    onClose() {
+      setConnected(false);
+    },
+    onError() {
+      setError("Erro ao conectar. Sala pode nao existir.");
+    },
+    onMessage(event) {
+      const data = JSON.parse(event.data);
 
-      const { data: sessionData, error } = await supabase
-        .from("sessions")
-        .select("id")
-        .eq("room_code", roomCode)
-        .eq("status", "active")
-        .single();
-
-      if (error || !sessionData) {
-        setLoadError("Sala nao encontrada ou aula encerrada");
-        return;
+      if (data.type === "init") {
+        // Received initial state
+        const newSlides = new Map<number, string>();
+        if (data.slides) {
+          Object.entries(data.slides).forEach(([num, img]) => {
+            newSlides.set(parseInt(num), img as string);
+          });
+        }
+        setSlides(newSlides);
+        setCurrentSlide(data.currentSlide || 1);
       }
 
-      setSessionId(sessionData.id);
-
-      const { data: slideData } = await supabase
-        .from("slide_images")
-        .select("*")
-        .eq("session_id", sessionData.id)
-        .order("slide_number");
-
-      if (slideData) {
-        setSlides(slideData);
+      if (data.type === "slide-update") {
+        setSlides((prev) => {
+          const next = new Map(prev);
+          next.set(data.slideNumber, data.imageData);
+          return next;
+        });
+        setCurrentSlide(data.currentSlide || data.slideNumber);
       }
-    }
+    },
+  });
 
-    loadSession();
-  }, [roomCode]);
-
-  if (loadError) {
+  if (error) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center space-y-4">
-          <p className="text-red-500 text-lg">{loadError}</p>
+          <p className="text-red-500 text-lg">{error}</p>
           <a href="/" className="text-blue-600 hover:underline">
             Voltar ao inicio
           </a>
@@ -60,23 +70,10 @@ export default function StudentSessionPage() {
     );
   }
 
-  if (!session) {
+  if (!connected) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-gray-500">Carregando...</p>
-      </main>
-    );
-  }
-
-  if (session.status === "ended") {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center space-y-4">
-          <p className="text-gray-700 text-lg">A aula foi encerrada</p>
-          <a href="/" className="text-blue-600 hover:underline">
-            Voltar ao inicio
-          </a>
-        </div>
+        <p className="text-gray-500">Conectando...</p>
       </main>
     );
   }
@@ -86,11 +83,9 @@ export default function StudentSessionPage() {
       <header className="bg-white shadow-sm p-4 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="font-semibold text-gray-900">
-              {session.presentation_title || "Apresentacao"}
-            </h1>
+            <h1 className="font-semibold text-gray-900">Apresentacao</h1>
             <p className="text-sm text-gray-500">
-              Slide {session.current_slide} de {session.total_slides}
+              Slide {currentSlide} &middot; Sala {roomCode}
             </p>
           </div>
           <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
@@ -99,13 +94,7 @@ export default function StudentSessionPage() {
         </div>
       </header>
 
-      <SlideViewer slides={slides} currentSlide={session.current_slide} />
-
-      {realtimeError && (
-        <div className="fixed bottom-4 left-4 right-4 bg-red-100 text-red-700 p-3 rounded-lg text-sm text-center">
-          Erro na conexao: {realtimeError}
-        </div>
-      )}
+      <SlideViewer slides={slides} currentSlide={currentSlide} />
     </main>
   );
 }
