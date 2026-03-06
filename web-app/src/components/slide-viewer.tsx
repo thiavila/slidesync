@@ -28,20 +28,26 @@ export default function SlideViewer({ slides, currentSlide }: SlideViewerProps) 
     }, IDLE_TIMEOUT);
   }, []);
 
-  // Listen for scroll/touch interactions
+  // Listen for scroll/touch interactions on the window
   useEffect(() => {
-    const container = document.querySelector("#slide-container");
-    if (!container) return;
+    let lastScrollY = window.scrollY;
 
-    const onScroll = () => handleUserInteraction();
+    const onScroll = () => {
+      // Only trigger if user scrolled UP (looking at previous slides)
+      if (window.scrollY < lastScrollY) {
+        handleUserInteraction();
+      }
+      lastScrollY = window.scrollY;
+    };
+
     const onTouch = () => handleUserInteraction();
 
-    container.addEventListener("scroll", onScroll);
-    container.addEventListener("touchstart", onTouch);
+    window.addEventListener("scroll", onScroll);
+    window.addEventListener("touchstart", onTouch);
 
     return () => {
-      container.removeEventListener("scroll", onScroll);
-      container.removeEventListener("touchstart", onTouch);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("touchstart", onTouch);
       if (idleTimer.current) clearTimeout(idleTimer.current);
     };
   }, [handleUserInteraction]);
