@@ -43,13 +43,27 @@
 
     function checkSlide() {
       const current = getSlideNumber();
-      if (current !== lastSlide) {
-        lastSlide = current;
-      }
+      if (current === lastSlide) return;
+      lastSlide = current;
       chrome.runtime.sendMessage({
         type: "capture-slide",
         slideNumber: current,
       });
+    }
+
+    function heartbeatCapture() {
+      const current = getSlideNumber();
+      lastSlide = current;
+      chrome.runtime.sendMessage({
+        type: "capture-slide",
+        slideNumber: current,
+      });
+    }
+
+    let checkSlideTimer = null;
+    function debouncedCheckSlide() {
+      if (checkSlideTimer) clearTimeout(checkSlideTimer);
+      checkSlideTimer = setTimeout(checkSlide, 400);
     }
 
     // Inject the side drawer
@@ -247,17 +261,17 @@
       document.getElementById("slidesync-qr").innerHTML = "";
     }
 
-    // Navigation listeners
-    window.addEventListener("hashchange", () => setTimeout(checkSlide, 100));
+    // Navigation listeners (debounced to avoid flooding on rapid navigation)
+    window.addEventListener("hashchange", debouncedCheckSlide);
     document.addEventListener("keydown", (e) => {
       if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown",
            " ", "PageUp", "PageDown", "Enter", "Backspace"].includes(e.key)) {
-        setTimeout(checkSlide, 300);
+        debouncedCheckSlide();
       }
     });
-    document.addEventListener("click", () => setTimeout(checkSlide, 300));
+    document.addEventListener("click", debouncedCheckSlide);
     setTimeout(checkSlide, 1000);
-    setInterval(checkSlide, 2000);
+    setInterval(heartbeatCapture, 2000);
 
     // Inject drawer UI
     injectDrawer();

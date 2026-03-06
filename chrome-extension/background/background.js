@@ -1,5 +1,8 @@
 let ws = null;
 let currentRoomCode = null;
+let currentWsUrl = null;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
 
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -49,18 +52,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 function connectWebSocket(wsUrl, roomCode) {
-  disconnectWebSocket();
+  if (ws) {
+    ws.onclose = null; // prevent reconnect from old socket
+    ws.close();
+    ws = null;
+  }
 
   currentRoomCode = roomCode;
+  currentWsUrl = wsUrl;
   ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {
+    reconnectAttempts = 0;
     console.log("[Slide Sync] WebSocket connected to room:", roomCode);
   };
 
   ws.onclose = () => {
     console.log("[Slide Sync] WebSocket disconnected");
     ws = null;
+    if (currentWsUrl && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      const delay = Math.min(1000 * 2 ** reconnectAttempts, 30000);
+      reconnectAttempts++;
+      console.log(`[Slide Sync] Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+      setTimeout(() => connectWebSocket(currentWsUrl, currentRoomCode), delay);
+    }
   };
 
   ws.onerror = (err) => {
@@ -69,7 +84,10 @@ function connectWebSocket(wsUrl, roomCode) {
 }
 
 function disconnectWebSocket() {
+  currentWsUrl = null;
+  reconnectAttempts = 0;
   if (ws) {
+    ws.onclose = null; // prevent auto-reconnect on intentional disconnect
     ws.close();
     ws = null;
   }
