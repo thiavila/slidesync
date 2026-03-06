@@ -71,11 +71,11 @@
 
             <label class="slidesync-field-label">Servidor PartyKit</label>
             <input type="text" class="slidesync-server-input" id="slidesync-server"
-                   placeholder="localhost:1999" value="localhost:1999" />
+                   placeholder="slide-sync.thiavila.partykit.dev" value="slide-sync.thiavila.partykit.dev" />
 
             <label class="slidesync-field-label">URL do Web App</label>
             <input type="text" class="slidesync-server-input" id="slidesync-webapp"
-                   placeholder="http://localhost:3000" value="http://localhost:3000" />
+                   placeholder="https://web-app-khaki-ten.vercel.app" value="https://web-app-khaki-ten.vercel.app" />
 
             <div class="slidesync-code-container">
               <div class="slidesync-code-label">Codigo da sala</div>
