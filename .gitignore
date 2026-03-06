@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env.local
+.env*.local
+.claude/
+_bmad/
+_bmad-output/
+.agents/
+.cursor/
+.gemini/
+docs/
+*.tsbuildinfo
