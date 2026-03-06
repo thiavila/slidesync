@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useAnnotations } from "@/hooks/use-annotations";
 import AnnotationCanvas from "@/components/annotation-canvas";
 import AnnotationToolbar from "@/components/annotation-toolbar";
-import type { Stroke, TextNote } from "@/lib/annotations/types";
 
 interface SlideViewerProps {
   slides: Map<number, string>;
@@ -12,7 +11,7 @@ interface SlideViewerProps {
   roomCode: string;
 }
 
-const IDLE_TIMEOUT = 30_000; // 30 seconds without interaction → resume auto-follow
+const IDLE_TIMEOUT = 30_000;
 
 export default function SlideViewer({ slides, currentSlide, roomCode }: SlideViewerProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -23,8 +22,9 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
   const [annotationMode, setAnnotationMode] = useState(false);
   const [activeTool, setActiveTool] = useState<"pen" | "eraser" | "text">("pen");
   const [color, setColor] = useState("#ef4444");
-  const lineWidth = 0.003; // normalized
-  const fontSize = 0.02; // normalized
+  const [lineWidth, setLineWidth] = useState(0.004);
+  const fontSize = 0.02;
+  const lastInteractedSlide = useRef<number | null>(null);
 
   const {
     loadSlide,
@@ -45,6 +45,18 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
     visibleSlides.forEach(([num]) => loadSlide(num));
   }, [slideKeys, loadSlide]);
 
+  // Track which slide was last drawn on
+  const handleSlideInteract = useCallback((slideNumber: number) => {
+    lastInteractedSlide.current = slideNumber;
+  }, []);
+
+  // Get the slide to apply undo/clear to
+  const getActiveSlide = (): number | null => {
+    if (lastInteractedSlide.current !== null) return lastInteractedSlide.current;
+    if (visibleSlides.length > 0) return visibleSlides[visibleSlides.length - 1][0];
+    return null;
+  };
+
   // User interacted → pause auto-follow, restart idle timer
   const handleUserInteraction = useCallback(() => {
     setAutoFollow(false);
@@ -60,16 +72,14 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
     let lastScrollY = window.scrollY;
 
     const onScroll = () => {
-      // Only trigger if user scrolled UP (looking at previous slides)
       if (window.scrollY < lastScrollY) {
         handleUserInteraction();
       }
       lastScrollY = window.scrollY;
     };
 
-    // Only listen for touch on non-annotation areas
     const onTouch = (e: TouchEvent) => {
-      if (annotationMode) return; // Don't pause auto-follow when annotating
+      if (annotationMode) return;
       handleUserInteraction();
     };
 
@@ -116,6 +126,7 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
             fontSize={fontSize}
             onStroke={addStroke}
             onTextNote={addTextNote}
+            onInteract={handleSlideInteract}
           />
         </div>
       ))}
@@ -142,15 +153,16 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
         <AnnotationToolbar
           activeTool={activeTool}
           color={color}
+          lineWidth={lineWidth}
           onToolChange={setActiveTool}
           onColorChange={setColor}
+          onLineWidthChange={setLineWidth}
           onUndo={() => {
-            // Find the currently visible slide closest to viewport center
-            const slideNum = findCenterSlide(visibleSlides);
+            const slideNum = getActiveSlide();
             if (slideNum !== null) undo(slideNum);
           }}
           onClear={() => {
-            const slideNum = findCenterSlide(visibleSlides);
+            const slideNum = getActiveSlide();
             if (slideNum !== null && confirm("Limpar todas as anotacoes deste slide?")) {
               clearSlide(slideNum);
             }
@@ -172,11 +184,4 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
       )}
     </div>
   );
-}
-
-/** Find the slide number closest to the center of the viewport */
-function findCenterSlide(visibleSlides: [number, string][]): number | null {
-  if (visibleSlides.length === 0) return null;
-  // Default to last slide
-  return visibleSlides[visibleSlides.length - 1][0];
 }

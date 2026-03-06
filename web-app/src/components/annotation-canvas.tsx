@@ -19,6 +19,7 @@ interface AnnotationCanvasProps {
   fontSize: number;
   onStroke: (slideNumber: number, stroke: Stroke) => void;
   onTextNote: (slideNumber: number, note: TextNote) => void;
+  onInteract?: (slideNumber: number) => void;
 }
 
 export default function AnnotationCanvas({
@@ -32,6 +33,7 @@ export default function AnnotationCanvas({
   fontSize,
   onStroke,
   onTextNote,
+  onInteract,
 }: AnnotationCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,6 +43,19 @@ export default function AnnotationCanvas({
   const [textInput, setTextInput] = useState<{ x: number; y: number; nx: number; ny: number } | null>(null);
   const [textValue, setTextValue] = useState("");
   const textInputRef = useRef<HTMLInputElement>(null);
+
+  // Use ref for annotation so syncSize always has latest data
+  const annotationRef = useRef(annotation);
+  annotationRef.current = annotation;
+
+  const redraw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    renderAnnotations(ctx, annotationRef.current, canvas.width, canvas.height);
+  }, []); // stable — reads from ref
 
   // Sync canvas size with image
   useEffect(() => {
@@ -52,7 +67,6 @@ export default function AnnotationCanvas({
       const rect = img.getBoundingClientRect();
       canvas.style.width = `${rect.width}px`;
       canvas.style.height = `${rect.height}px`;
-      // Use natural image size for crisp rendering
       canvas.width = img.naturalWidth || rect.width;
       canvas.height = img.naturalHeight || rect.height;
       redraw();
@@ -70,22 +84,12 @@ export default function AnnotationCanvas({
       img.removeEventListener("load", syncSize);
       observer.disconnect();
     };
-  }, [imageData]);
+  }, [imageData, redraw]);
 
   // Redraw when annotations change
-  const redraw = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    renderAnnotations(ctx, annotation, canvas.width, canvas.height);
-  }, [annotation]);
-
   useEffect(() => {
     redraw();
-  }, [redraw]);
+  }, [annotation, redraw]);
 
   // Normalize pointer to 0-1 coordinates
   const normalizePoint = useCallback(
@@ -103,6 +107,7 @@ export default function AnnotationCanvas({
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (!annotationMode) return;
+      onInteract?.(slideNumber);
 
       if (activeTool === "text") {
         const normalized = normalizePoint(e.clientX, e.clientY);
@@ -125,7 +130,7 @@ export default function AnnotationCanvas({
       const canvas = canvasRef.current!;
       canvas.setPointerCapture(e.pointerId);
     },
-    [annotationMode, activeTool, normalizePoint]
+    [annotationMode, activeTool, normalizePoint, onInteract, slideNumber]
   );
 
   const handlePointerMove = useCallback(
@@ -139,11 +144,9 @@ export default function AnnotationCanvas({
       const canvas = canvasRef.current!;
       const ctx = canvas.getContext("2d")!;
 
-      // Redraw existing annotations + current stroke
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      renderAnnotations(ctx, annotation, canvas.width, canvas.height);
+      renderAnnotations(ctx, annotationRef.current, canvas.width, canvas.height);
 
-      // Draw current stroke
       if (currentPoints.current.length >= 2) {
         ctx.save();
         ctx.lineCap = "round";
@@ -169,7 +172,7 @@ export default function AnnotationCanvas({
         ctx.restore();
       }
     },
-    [annotationMode, annotation, activeTool, color, lineWidth, normalizePoint]
+    [annotationMode, activeTool, color, lineWidth, normalizePoint]
   );
 
   const handlePointerUp = useCallback(

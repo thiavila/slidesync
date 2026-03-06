@@ -5,23 +5,33 @@ import { useState } from "react";
 interface AnnotationToolbarProps {
   activeTool: "pen" | "eraser" | "text";
   color: string;
+  lineWidth: number;
   onToolChange: (tool: "pen" | "eraser" | "text") => void;
   onColorChange: (color: string) => void;
+  onLineWidthChange: (width: number) => void;
   onUndo: () => void;
   onClear: () => void;
 }
 
 const PRESET_COLORS = ["#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#000000"];
+const LINE_WIDTHS = [
+  { value: 0.002, label: "Fina" },
+  { value: 0.004, label: "Media" },
+  { value: 0.008, label: "Grossa" },
+];
 
 export default function AnnotationToolbar({
   activeTool,
   color,
+  lineWidth,
   onToolChange,
   onColorChange,
+  onLineWidthChange,
   onUndo,
   onClear,
 }: AnnotationToolbarProps) {
   const [showColors, setShowColors] = useState(false);
+  const [showSizes, setShowSizes] = useState(false);
 
   return (
     <div className="fixed bottom-16 left-4 z-50 flex flex-col gap-2 bg-white rounded-xl shadow-lg p-2 border border-gray-200">
@@ -74,10 +84,43 @@ export default function AnnotationToolbar({
       {/* Divider */}
       <div className="border-t border-gray-200 my-1" />
 
+      {/* Line width / size picker */}
+      <div className="relative">
+        <button
+          onClick={() => { setShowSizes(!showSizes); setShowColors(false); }}
+          className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-gray-100 transition"
+          title="Espessura"
+        >
+          <div className="flex flex-col items-center gap-[3px]">
+            <div className="bg-gray-600 rounded-full" style={{ width: 14, height: lineWidth === 0.002 ? 2 : lineWidth === 0.004 ? 3 : 5 }} />
+          </div>
+        </button>
+
+        {showSizes && (
+          <div className="absolute left-12 bottom-0 bg-white rounded-lg shadow-lg border border-gray-200 p-2 flex flex-col gap-1">
+            {LINE_WIDTHS.map((lw) => (
+              <button
+                key={lw.value}
+                onClick={() => {
+                  onLineWidthChange(lw.value);
+                  setShowSizes(false);
+                }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition text-sm whitespace-nowrap ${
+                  lineWidth === lw.value ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100 text-gray-600"
+                }`}
+              >
+                <div className="bg-current rounded-full" style={{ width: 20, height: lw.value * 500 }} />
+                {lw.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Color picker */}
       <div className="relative">
         <button
-          onClick={() => setShowColors(!showColors)}
+          onClick={() => { setShowColors(!showColors); setShowSizes(false); }}
           className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-gray-100 transition"
           title="Cor"
         >
