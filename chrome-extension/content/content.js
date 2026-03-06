@@ -306,6 +306,12 @@
       btn.setAttribute("aria-label", "Present with Slide Sync");
       btn.setAttribute("data-tooltip", "Present with Slide Sync");
       btn.href = window.location.href.replace("edit", "present");
+      btn.target = "_blank";
+      btn.addEventListener("click", () => {
+        // Clear any previous session so present mode opens fresh
+        chrome.storage.local.remove(["roomCode", "wsUrl", "isActive"]);
+        chrome.runtime.sendMessage({ type: "stop-session" });
+      });
       presentContainer.before(btn);
 
       console.log("[Slide Sync] Edit mode - button injected next to Present");
