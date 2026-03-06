@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import usePartySocket from "partysocket/react";
 import SlideViewer from "@/components/slide-viewer";
+import DownloadButton from "@/components/download-button";
 
 const PARTY_HOST =
   process.env.NEXT_PUBLIC_PARTYKIT_HOST || "localhost:1999";
@@ -88,13 +89,20 @@ export default function StudentSessionPage() {
               Slide {currentSlide} &middot; Sala {roomCode}
             </p>
           </div>
-          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-            Ao vivo
-          </span>
+          <div className="flex items-center gap-3">
+            <DownloadButton
+              roomCode={roomCode}
+              slides={slides}
+              currentSlide={currentSlide}
+            />
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+              Ao vivo
+            </span>
+          </div>
         </div>
       </header>
 
-      <SlideViewer slides={slides} currentSlide={currentSlide} />
+      <SlideViewer slides={slides} currentSlide={currentSlide} roomCode={roomCode} />
     </main>
   );
 }

@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "fflate": "^0.8.2",
+    "idb-keyval": "^6.2.2",
+    "jspdf": "^4.2.0",
     "next": "16.1.6",
     "partysocket": "^1.1.16",
     "react": "19.2.3",
