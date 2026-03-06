@@ -4,17 +4,16 @@
   "version": "2.0.0",
   "description": "Compartilhe slides da aula em tempo real com seus alunos",
   "permissions": ["activeTab", "storage", "tabs"],
-  "host_permissions": ["http://localhost:*/*", "https://*/*"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background/background.js"
   },
   "content_scripts": [
     {
       "matches": [
-        "*://docs.google.com/presentation/d/*/edit*",
-        "*://docs.google.com/presentation/d/*/present*"
+        "*://docs.google.com/presentation/*"
       ],
-      "js": ["content/content.js"],
+      "js": ["content/qrcode.min.js", "content/content.js"],
       "css": ["content/content.css"],
       "run_at": "document_idle"
     }

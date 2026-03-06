@@ -23,6 +23,17 @@ export default function Home() {
         <p className="text-xs text-gray-400">
           Professor? Instale a extensao do Chrome para comecar.
         </p>
+
+        <p className="text-xs text-gray-400 pt-4">
+          Inspired by{" "}
+          <a href="https://limhenry.xyz/slides/" target="_blank" className="text-blue-400 hover:underline">
+            Remote for Slides
+          </a>{" "}
+          by Henry Lim.{" "}
+          <a href="https://www.patreon.com/remoteforslides" target="_blank" className="text-blue-400 hover:underline">
+            Support him, not me.
+          </a>
+        </p>
       </div>
     </main>
   );

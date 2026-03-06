@@ -14,33 +14,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "capture-slide") {
-    // Capture the visible tab as screenshot
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-    chrome.tabs.captureVisibleTab(
-      sender.tab.windowId,
-      { format: "jpeg", quality: 70 },
-      (imageData) => {
-        if (chrome.runtime.lastError) {
-          console.warn("[Slide Sync] Capture error:", chrome.runtime.lastError.message);
-          return;
-        }
+    // Only capture if the presentation tab is the active tab in its window
+    chrome.tabs.get(sender.tab.id, (tab) => {
+      if (chrome.runtime.lastError || !tab.active) return;
 
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(
-            JSON.stringify({
-              type: "slide-update",
-              slideNumber: message.slideNumber,
-              imageData: imageData,
-            })
-          );
-          console.log("[Slide Sync] Sent slide", message.slideNumber);
+      chrome.tabs.captureVisibleTab(
+        sender.tab.windowId,
+        { format: "jpeg", quality: 70 },
+        (imageData) => {
+          if (chrome.runtime.lastError) {
+            console.warn("[Slide Sync] Capture error:", chrome.runtime.lastError.message);
+            return;
+          }
 
-          // Update storage for popup display
-          chrome.storage.local.set({ currentSlide: message.slideNumber });
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(
+              JSON.stringify({
+                type: "slide-update",
+                slideNumber: message.slideNumber,
+                imageData: imageData,
+              })
+            );
+            console.log("[Slide Sync] Sent slide", message.slideNumber);
+            chrome.storage.local.set({ currentSlide: message.slideNumber });
+          }
         }
-      }
-    );
+      );
+    });
   }
 
   return true;
