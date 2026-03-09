@@ -8,6 +8,5 @@ _bmad-output/
 .agents/
 .cursor/
 .gemini/
-docs/
 *.tsbuildinfo
 .partykit/
