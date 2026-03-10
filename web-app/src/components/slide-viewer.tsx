@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useAnnotations } from "@/hooks/use-annotations";
 import AnnotationCanvas from "@/components/annotation-canvas";
 import AnnotationToolbar from "@/components/annotation-toolbar";
-import ZoomPanWrapper from "@/components/zoom-pan-wrapper";
 
 interface SlideViewerProps {
   slides: Map<number, string>;
@@ -116,21 +115,19 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
           key={slideNumber}
           className="bg-white rounded-lg shadow overflow-hidden"
         >
-          <ZoomPanWrapper annotationMode={annotationMode}>
-            <AnnotationCanvas
-              slideNumber={slideNumber}
-              imageData={imageData}
-              annotation={getSlideAnnotation(slideNumber)}
-              annotationMode={annotationMode}
-              activeTool={activeTool}
-              color={color}
-              lineWidth={lineWidth}
-              fontSize={fontSize}
-              onStroke={addStroke}
-              onTextNote={addTextNote}
-              onInteract={handleSlideInteract}
-            />
-          </ZoomPanWrapper>
+          <AnnotationCanvas
+            slideNumber={slideNumber}
+            imageData={imageData}
+            annotation={getSlideAnnotation(slideNumber)}
+            annotationMode={annotationMode}
+            activeTool={activeTool}
+            color={color}
+            lineWidth={lineWidth}
+            fontSize={fontSize}
+            onStroke={addStroke}
+            onTextNote={addTextNote}
+            onInteract={handleSlideInteract}
+          />
         </div>
       ))}
       <div ref={bottomRef} />
