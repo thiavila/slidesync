@@ -107,6 +107,7 @@ export default function AnnotationCanvas({
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (!annotationMode) return;
+      if (e.pointerType === "touch") return;
       onInteract?.(slideNumber);
 
       if (activeTool === "text") {
@@ -135,6 +136,7 @@ export default function AnnotationCanvas({
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
       if (!isDrawing.current || !annotationMode) return;
 
       const point = normalizePoint(e.clientX, e.clientY);
@@ -177,6 +179,7 @@ export default function AnnotationCanvas({
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent) => {
+      if (e.pointerType === "touch") return;
       if (!isDrawing.current) return;
       isDrawing.current = false;
 
@@ -228,7 +231,7 @@ export default function AnnotationCanvas({
         ref={canvasRef}
         className="absolute top-0 left-0"
         style={{
-          touchAction: annotationMode ? "none" : "auto",
+          touchAction: "auto",
           pointerEvents: annotationMode ? "auto" : "none",
           cursor: annotationMode
             ? activeTool === "text"
