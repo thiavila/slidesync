@@ -81,21 +81,18 @@ export default function StudentSessionPage() {
 
   return (
     <main className="min-h-screen bg-gray-100">
-      <header className="bg-white shadow-sm p-4 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="font-semibold text-gray-900">Apresentacao</h1>
-            <p className="text-sm text-gray-500">
-              Slide {currentSlide} &middot; Sala {roomCode}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
+      <header className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="px-4 py-1.5 flex items-center justify-between">
+          <span className="text-xs text-gray-500">
+            Slide {currentSlide} &middot; Sala {roomCode}
+          </span>
+          <div className="flex items-center gap-2">
             <DownloadButton
               roomCode={roomCode}
               slides={slides}
               currentSlide={currentSlide}
             />
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
               Ao vivo
             </span>
           </div>

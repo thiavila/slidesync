@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useAnnotations } from "@/hooks/use-annotations";
 import AnnotationCanvas from "@/components/annotation-canvas";
 import AnnotationToolbar from "@/components/annotation-toolbar";
-import ZoomPanWrapper from "@/components/zoom-pan-wrapper";
 
 interface SlideViewerProps {
   slides: Map<number, string>;
@@ -110,27 +109,25 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
   }
 
   return (
-    <div id="slide-container" className="space-y-4 p-4 max-w-4xl mx-auto">
+    <div id="slide-container" className="space-y-0.5">
       {visibleSlides.map(([slideNumber, imageData]) => (
         <div
           key={slideNumber}
-          className="bg-white rounded-lg shadow overflow-hidden"
+          className="bg-white overflow-hidden"
         >
-          <ZoomPanWrapper annotationMode={annotationMode}>
-            <AnnotationCanvas
-              slideNumber={slideNumber}
-              imageData={imageData}
-              annotation={getSlideAnnotation(slideNumber)}
-              annotationMode={annotationMode}
-              activeTool={activeTool}
-              color={color}
-              lineWidth={lineWidth}
-              fontSize={fontSize}
-              onStroke={addStroke}
-              onTextNote={addTextNote}
-              onInteract={handleSlideInteract}
-            />
-          </ZoomPanWrapper>
+          <AnnotationCanvas
+            slideNumber={slideNumber}
+            imageData={imageData}
+            annotation={getSlideAnnotation(slideNumber)}
+            annotationMode={annotationMode}
+            activeTool={activeTool}
+            color={color}
+            lineWidth={lineWidth}
+            fontSize={fontSize}
+            onStroke={addStroke}
+            onTextNote={addTextNote}
+            onInteract={handleSlideInteract}
+          />
         </div>
       ))}
       <div ref={bottomRef} />
