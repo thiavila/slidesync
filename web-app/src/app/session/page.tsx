@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import usePartySocket from "partysocket/react";
 import SlideViewer from "@/components/slide-viewer";
 import DownloadButton from "@/components/download-button";
@@ -16,8 +16,6 @@ export default function StudentSessionPage() {
   const [currentSlide, setCurrentSlide] = useState(1);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const slidesRef = useRef(slides);
-  slidesRef.current = slides;
 
   useEffect(() => {
     const code = window.location.pathname.split("/session/")[1]?.replace(/\/$/, "");
