@@ -109,11 +109,11 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
   }
 
   return (
-    <div id="slide-container" className="space-y-4 p-4 max-w-4xl mx-auto">
+    <div id="slide-container" className="space-y-0.5">
       {visibleSlides.map(([slideNumber, imageData]) => (
         <div
           key={slideNumber}
-          className="bg-white rounded-lg shadow overflow-hidden"
+          className="bg-white overflow-hidden"
         >
           <AnnotationCanvas
             slideNumber={slideNumber}

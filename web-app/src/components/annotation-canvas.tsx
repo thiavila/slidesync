@@ -4,6 +4,10 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import type { Stroke, TextNote, SlideAnnotation, Point } from "@/lib/annotations/types";
 import { renderAnnotations } from "@/lib/annotations/canvas-engine";
 
+interface SafariTouch extends Touch {
+  touchType?: "direct" | "stylus";
+}
+
 function genId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
@@ -44,9 +48,21 @@ export default function AnnotationCanvas({
   const [textValue, setTextValue] = useState("");
   const textInputRef = useRef<HTMLInputElement>(null);
 
-  // Use ref for annotation so syncSize always has latest data
+  // Refs for values used inside native event listeners (avoids re-registering)
   const annotationRef = useRef(annotation);
   annotationRef.current = annotation;
+  const activeToolRef = useRef(activeTool);
+  activeToolRef.current = activeTool;
+  const colorRef = useRef(color);
+  colorRef.current = color;
+  const lineWidthRef = useRef(lineWidth);
+  lineWidthRef.current = lineWidth;
+  const onStrokeRef = useRef(onStroke);
+  onStrokeRef.current = onStroke;
+  const onTextNoteRef = useRef(onTextNote);
+  onTextNoteRef.current = onTextNote;
+  const onInteractRef = useRef(onInteract);
+  onInteractRef.current = onInteract;
 
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -103,14 +119,28 @@ export default function AnnotationCanvas({
     },
     []
   );
+  const normalizePointRef = useRef(normalizePoint);
+  normalizePointRef.current = normalizePoint;
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if (!annotationMode) return;
-      onInteract?.(slideNumber);
+  // Native pointer event listeners on the container.
+  // Canvas has pointer-events:none — it only renders.
+  // iPad: finger scrolls, Apple Pencil draws (touch events filtered).
+  // iPhone/other: finger draws (touch events allowed).
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !annotationMode) return;
 
-      if (activeTool === "text") {
-        const normalized = normalizePoint(e.clientX, e.clientY);
+    // iPad reports as Macintosh with touch support (iPadOS 13+)
+    const isIPad = navigator.maxTouchPoints > 1 &&
+      /Macintosh|iPad/.test(navigator.userAgent);
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (isIPad && e.pointerType === "touch") return; // iPad: let finger scroll
+      e.preventDefault();
+      onInteractRef.current?.(slideNumber);
+
+      if (activeToolRef.current === "text") {
+        const normalized = normalizePointRef.current(e.clientX, e.clientY);
         const canvas = canvasRef.current!;
         const rect = canvas.getBoundingClientRect();
         setTextInput({
@@ -125,19 +155,16 @@ export default function AnnotationCanvas({
       }
 
       isDrawing.current = true;
-      currentPoints.current = [normalizePoint(e.clientX, e.clientY)];
+      currentPoints.current = [normalizePointRef.current(e.clientX, e.clientY)];
+      container.setPointerCapture(e.pointerId);
+    };
 
-      const canvas = canvasRef.current!;
-      canvas.setPointerCapture(e.pointerId);
-    },
-    [annotationMode, activeTool, normalizePoint, onInteract, slideNumber]
-  );
+    const onPointerMove = (e: PointerEvent) => {
+      if (isIPad && e.pointerType === "touch") return;
+      if (!isDrawing.current) return;
+      e.preventDefault();
 
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (!isDrawing.current || !annotationMode) return;
-
-      const point = normalizePoint(e.clientX, e.clientY);
+      const point = normalizePointRef.current(e.clientX, e.clientY);
       currentPoints.current.push(point);
 
       // Live preview
@@ -151,14 +178,14 @@ export default function AnnotationCanvas({
         ctx.save();
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        ctx.lineWidth = lineWidth * canvas.width;
+        ctx.lineWidth = lineWidthRef.current * canvas.width;
 
-        if (activeTool === "eraser") {
+        if (activeToolRef.current === "eraser") {
           ctx.globalCompositeOperation = "destination-out";
           ctx.strokeStyle = "rgba(0,0,0,1)";
         } else {
           ctx.globalCompositeOperation = "source-over";
-          ctx.strokeStyle = color;
+          ctx.strokeStyle = colorRef.current;
         }
 
         ctx.beginPath();
@@ -171,30 +198,72 @@ export default function AnnotationCanvas({
         ctx.stroke();
         ctx.restore();
       }
-    },
-    [annotationMode, activeTool, color, lineWidth, normalizePoint]
-  );
+    };
 
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent) => {
+    const onPointerUp = (e: PointerEvent) => {
+      if (isIPad && e.pointerType === "touch") return;
       if (!isDrawing.current) return;
       isDrawing.current = false;
 
       if (currentPoints.current.length >= 2) {
         const stroke: Stroke = {
           id: genId(),
-          tool: activeTool as "pen" | "eraser",
+          tool: activeToolRef.current as "pen" | "eraser",
           points: [...currentPoints.current],
-          color,
-          lineWidth,
+          color: colorRef.current,
+          lineWidth: lineWidthRef.current,
           timestamp: Date.now(),
         };
-        onStroke(slideNumber, stroke);
+        onStrokeRef.current(slideNumber, stroke);
       }
       currentPoints.current = [];
-    },
-    [activeTool, color, lineWidth, slideNumber, onStroke]
-  );
+    };
+
+    // Prevent Safari from scrolling during drawing.
+    // iPad: only block scroll for Apple Pencil (stylus), finger scrolls normally.
+    // iPhone/other: block scroll for all touches (finger is the drawing tool).
+    const onTouchStart = (e: TouchEvent) => {
+      if (isIPad) {
+        for (let i = 0; i < e.touches.length; i++) {
+          if ((e.touches[i] as SafariTouch).touchType === "stylus") {
+            e.preventDefault();
+            return;
+          }
+        }
+      } else {
+        e.preventDefault();
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (isIPad) {
+        for (let i = 0; i < e.touches.length; i++) {
+          if ((e.touches[i] as SafariTouch).touchType === "stylus") {
+            e.preventDefault();
+            return;
+          }
+        }
+      } else {
+        e.preventDefault();
+      }
+    };
+
+    container.addEventListener("pointerdown", onPointerDown, { passive: false });
+    container.addEventListener("pointermove", onPointerMove, { passive: false });
+    container.addEventListener("pointerup", onPointerUp);
+    container.addEventListener("pointercancel", onPointerUp);
+    container.addEventListener("touchstart", onTouchStart, { passive: false });
+    container.addEventListener("touchmove", onTouchMove, { passive: false });
+
+    return () => {
+      container.removeEventListener("pointerdown", onPointerDown);
+      container.removeEventListener("pointermove", onPointerMove);
+      container.removeEventListener("pointerup", onPointerUp);
+      container.removeEventListener("pointercancel", onPointerUp);
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [annotationMode, slideNumber]);
 
   const handleTextSubmit = useCallback(() => {
     if (!textInput || !textValue.trim()) {
@@ -217,7 +286,17 @@ export default function AnnotationCanvas({
   }, [textInput, textValue, color, fontSize, slideNumber, onTextNote]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div
+      ref={containerRef}
+      className="relative"
+      style={{
+        cursor: annotationMode
+          ? activeTool === "text"
+            ? "text"
+            : "crosshair"
+          : "default",
+      }}
+    >
       <img
         ref={imgRef}
         src={imageData}
@@ -227,19 +306,7 @@ export default function AnnotationCanvas({
       <canvas
         ref={canvasRef}
         className="absolute top-0 left-0"
-        style={{
-          touchAction: annotationMode ? "none" : "auto",
-          pointerEvents: annotationMode ? "auto" : "none",
-          cursor: annotationMode
-            ? activeTool === "text"
-              ? "text"
-              : "crosshair"
-            : "default",
-        }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
+        style={{ pointerEvents: "none" }}
       />
       {textInput && (
         <input
