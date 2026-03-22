@@ -198,8 +198,7 @@
 
     function startSession() {
       const roomCode = generateRoomCode();
-      const protocol = PARTY_SERVER.startsWith("localhost") ? "ws" : "wss";
-      const wsUrl = `${protocol}://${PARTY_SERVER}/parties/main/${roomCode}`;
+      const wsUrl = `wss://${PARTY_SERVER}/parties/main/${roomCode}`;
 
       chrome.storage.local.set({
         roomCode: roomCode,
