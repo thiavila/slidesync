@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useAnnotations } from "@/hooks/use-annotations";
 import AnnotationCanvas from "@/components/annotation-canvas";
 import AnnotationToolbar from "@/components/annotation-toolbar";
+import { useTranslations } from "@/lib/i18n/use-translations";
 
 interface SlideViewerProps {
   slides: Map<number, string>;
@@ -14,6 +15,7 @@ interface SlideViewerProps {
 const IDLE_TIMEOUT = 30_000;
 
 export default function SlideViewer({ slides, currentSlide, roomCode }: SlideViewerProps) {
+  const { t } = useTranslations();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [autoFollow, setAutoFollow] = useState(true);
   const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -103,7 +105,7 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
   if (visibleSlides.length === 0) {
     return (
       <div className="flex items-center justify-center h-64 text-gray-500">
-        Aguardando o professor iniciar a apresentacao...
+        {t("viewer.waiting")}
       </div>
     );
   }
@@ -140,7 +142,7 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
             ? "bg-blue-600 text-white"
             : "bg-white text-gray-600 border border-gray-200"
         }`}
-        title={annotationMode ? "Sair do modo anotacao" : "Anotar slides"}
+        title={annotationMode ? t("viewer.exitAnnotation") : t("viewer.annotateSlides")}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -163,7 +165,7 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
           }}
           onClear={() => {
             const slideNum = getActiveSlide();
-            if (slideNum !== null && confirm("Limpar todas as anotacoes deste slide?")) {
+            if (slideNum !== null && confirm(t("viewer.clearConfirm"))) {
               clearSlide(slideNum);
             }
           }}
@@ -179,7 +181,7 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
           }}
           className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium hover:bg-blue-700 transition z-50"
         >
-          Seguir apresentacao ao vivo
+          {t("viewer.followLive")}
         </button>
       )}
     </div>

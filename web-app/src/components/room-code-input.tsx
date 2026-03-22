@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "@/lib/i18n/use-translations";
 
 interface RoomCodeInputProps {
   onSubmit: (code: string) => void;
@@ -13,6 +14,7 @@ export default function RoomCodeInput({
   loading,
   error,
 }: RoomCodeInputProps) {
+  const { t } = useTranslations();
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -68,7 +70,7 @@ export default function RoomCodeInput({
       </div>
       {error && <p className="text-red-500 text-sm text-center">{error}</p>}
       {loading && (
-        <p className="text-gray-500 text-sm text-center">Entrando na sala...</p>
+        <p className="text-gray-500 text-sm text-center">{t("join.entering")}</p>
       )}
     </div>
   );

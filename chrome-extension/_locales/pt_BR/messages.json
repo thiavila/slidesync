@@ -1,0 +1,18 @@
+{
+  "extName": { "message": "Slide Sync" },
+  "extDescription": { "message": "Compartilhe slides da aula em tempo real com seus alunos" },
+  "noActiveSession": { "message": "Sem sessao ativa" },
+  "openPresentationHint": { "message": "Abra uma apresentacao no Google Slides para comecar." },
+  "activeSession": { "message": "Sessao ativa" },
+  "roomCodeLabel": { "message": "Codigo da sala" },
+  "currentSlideLabel": { "message": "Slide atual" },
+  "drawerSubtitle": { "message": "Compartilhe seus slides em tempo real" },
+  "statusDisconnected": { "message": "Desconectado" },
+  "statusActive": { "message": "Ativo" },
+  "startSession": { "message": "Iniciar sessao" },
+  "stopSession": { "message": "Encerrar sessao" },
+  "presentButton": { "message": "Apresentar c/ Slide Sync" },
+  "presentButtonAria": { "message": "Apresentar com Slide Sync" },
+  "inspiredBy": { "message": "Inspirado por" },
+  "sponsor": { "message": "Sponsor" }
+}

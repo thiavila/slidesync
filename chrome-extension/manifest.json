@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
-  "name": "Slide Sync",
-  "version": "2.0.0",
-  "description": "Compartilhe slides da aula em tempo real com seus alunos",
+  "name": "__MSG_extName__",
+  "version": "2.1.0",
+  "description": "__MSG_extDescription__",
+  "default_locale": "pt_BR",
   "permissions": ["activeTab", "storage", "tabs"],
-  "host_permissions": ["<all_urls>"],
+  "host_permissions": ["*://docs.google.com/presentation/*"],
   "background": {
     "service_worker": "background/background.js"
   },

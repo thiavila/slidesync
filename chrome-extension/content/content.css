@@ -121,35 +121,6 @@
   margin-bottom: 24px;
 }
 
-/* Server input */
-.slidesync-drawer .slidesync-field-label {
-  font-size: 12px;
-  color: #aaa;
-  align-self: flex-start;
-  margin-bottom: 4px;
-}
-
-.slidesync-drawer .slidesync-server-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #555;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-bottom: 20px;
-  background: #404040;
-  color: #fff;
-  font-family: inherit;
-}
-
-.slidesync-drawer .slidesync-server-input:focus {
-  outline: none;
-  border-color: #ffb806;
-}
-
-.slidesync-drawer .slidesync-server-input:disabled {
-  opacity: 0.5;
-}
-
 /* Room code */
 .slidesync-drawer .slidesync-code-container {
   text-align: center;
@@ -281,5 +252,19 @@
 }
 
 .slidesync-drawer .slidesync-credits a:hover {
+  text-decoration: underline;
+}
+
+.slidesync-drawer .slidesync-sponsor {
+  margin-top: 8px;
+}
+
+.slidesync-drawer .slidesync-sponsor a {
+  color: #ffb806;
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.slidesync-drawer .slidesync-sponsor a:hover {
   text-decoration: underline;
 }

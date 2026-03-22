@@ -1,79 +1,58 @@
 # Slide Sync
 
-Real-time slide synchronization for classrooms. The professor presents on Google Slides and students follow along on their devices, seeing only the slides up to the current one — never ahead.
+Real-time slide synchronization for classrooms. Teachers present on Google Slides; students follow along on their own devices.
 
-Built by a professor, for professors.
+## Overview
 
-**Inspired by [Remote for Slides](https://limhenry.xyz/slides/) by [Henry Lim](https://limhenry.xyz/).** This project wouldn't exist without his work. [Support him on Patreon](https://www.patreon.com/remoteforslides) — he deserves it.
+Slide Sync lets a teacher broadcast their Google Slides presentation to every student in the room, in real-time. Students see slides update instantly on their phones, tablets, or laptops -- no login required. They can annotate slides and export them as PDF for later review.
 
-## Origin Story
-
-This project was born from two frustrations and one observation:
-
-1. **Remote for Slides didn't go fullscreen.** As a professor, presenting without true fullscreen mode was a constant annoyance — it was one of the reasons I stopped using it. Slide Sync auto-enters fullscreen on the first interaction and re-enters if you accidentally exit.
-
-2. **Students couldn't see the slides properly.** My student Maria Luisa was always taking photos of the slides during class with her phone. That made me think: what if the slides just appeared on her phone automatically, in real-time?
-
-3. **Screenshots > Thumbnails.** By capturing screenshots instead of fetching thumbnails from the Google Slides API, we get animations for free — every click updates the image, so bullet points appearing one by one just work.
-
-## How It Works
-
-1. Professor opens Google Slides and clicks **"Present w/ Slide Sync"**
-2. A side drawer appears with a **room code** and **QR code**
-3. Students scan the QR code or enter the room code at the web app
-4. As the professor advances slides, students see updates in real-time
-5. Students **cannot** see future slides — only slides up to the current one
-6. Each click is captured as a screenshot, so **animations work** (bullet points appearing one by one)
+Built by a professor, for professors. Inspired by [Remote for Slides](https://limhenry.xyz/slides/) by [Henry Lim](https://limhenry.xyz/).
 
 ## Architecture
 
 ```
-Chrome Extension          PartyKit Server          Web App (Next.js)
-(Google Slides)           (WebSocket relay)        (Student view)
-     |                         |                        |
-     |-- screenshot --------->|                        |
-     |   (base64 JPEG)        |-- broadcast ---------->|
-     |                         |   (slide-update)       |-- render slides
-     |                         |                        |   1..currentSlide
+Chrome Extension              PartyKit Server              Web App (Next.js)
+(Google Slides)                (WebSocket relay)            (Student view)
+      |                              |                            |
+      |--- screenshot (base64) ----->|                            |
+      |                              |--- broadcast ------------>|
+      |                              |    (slide-update)          |--- render slides
+      |                              |                            |    1..currentSlide
 ```
 
-Three components, zero database:
+Three components, zero database -- all state is ephemeral and lives in memory.
 
-| Component | What it does | Tech |
-|-----------|-------------|------|
-| **Chrome Extension** | Captures screenshots on slide change, sends via WebSocket | Manifest V3, content script |
-| **PartyKit Server** | Relays screenshots between professor and students | PartyKit (Cloudflare Workers) |
-| **Web App** | Students view slides in real-time | Next.js, partysocket |
+| Component | Purpose | Tech |
+|---|---|---|
+| **Chrome Extension** | Captures screenshots on each slide change, sends via WebSocket | Manifest V3 |
+| **PartyKit Server** | Relays screenshots between teacher and students | PartyKit (Cloudflare Workers) |
+| **Web App** | Students view and annotate slides in real-time | Next.js, Tailwind CSS |
 
-## Project Structure
+## Features
 
-```
-slide-sync/
-  chrome-extension/       # Chrome Extension (Manifest V3)
-    manifest.json
-    content/              # Injected into Google Slides
-      content.js          # Edit mode: toolbar button | Present mode: drawer + capture
-      content.css         # Drawer styles (inspired by Remote for Slides)
-      qrcode.min.js       # QR code generation (qrcodejs)
-    background/
-      background.js       # WebSocket connection + captureVisibleTab
-    popup/                # Extension popup (session status)
+- **Real-time sync** -- slides update on every device the moment the teacher advances
+- **Screenshot-based** -- captures actual screen content, so animations and step-by-step builds just work
+- **Annotations** -- students can draw, highlight, and write notes on any slide
+- **PDF export** -- download slides with personal annotations for review after class
+- **No login required** -- students just enter a 6-digit room code or scan a QR code
+- **i18n** -- supports English and Brazilian Portuguese, auto-detected from browser
 
-  party-server/           # PartyKit WebSocket server
-    server.ts             # Relay: receives screenshots, broadcasts to students
-    partykit.json
+## Getting Started (for users)
 
-  web-app/                # Next.js web app (student view)
-    src/app/
-      page.tsx            # Landing page
-      join/page.tsx       # Room code input
-      session/[roomCode]/ # Real-time slide viewer
-    src/components/
-      slide-viewer.tsx    # Renders slides 1..currentSlide
-      room-code-input.tsx # 6-digit code input
-```
+1. Install the Slide Sync Chrome extension
+2. Open a presentation in Google Slides
+3. Click **"Present w/ Slide Sync"** in the toolbar
+4. Share the room code or QR code with students
+5. Students open the web app, enter the code, and follow along
 
-## Running Locally
+## Development Setup
+
+### Prerequisites
+
+- Node.js 18+
+- npm
+
+### Run all three components locally
 
 ```bash
 # 1. Start PartyKit server
@@ -90,71 +69,42 @@ npm run dev
 # 3. Load Chrome Extension
 # Go to chrome://extensions
 # Enable "Developer mode"
-# Click "Load unpacked" → select the chrome-extension/ folder
+# Click "Load unpacked" -> select the chrome-extension/ folder
 
-# 4. Open Google Slides → click "Present w/ Slide Sync" → start session
+# 4. Open Google Slides -> Present w/ Slide Sync -> start a session
 ```
 
-## Production Deployment
+### Environment variables
 
-Currently deployed at:
-- **Web App**: https://web-app-khaki-ten.vercel.app (Vercel free tier)
-- **PartyKit**: slide-sync.thiavila.partykit.dev (PartyKit free tier)
+The web app needs one variable:
 
-### Free Tier Limits
-- **PartyKit**: 20 simultaneous rooms, 100 connections/room
-- **Vercel**: 100GB bandwidth/month
+```
+NEXT_PUBLIC_PARTYKIT_HOST=localhost:1999
+```
 
-This is enough for personal/university use (20 professors presenting at the same time).
+## Deployment
 
-## Future: Migration to Cloudflare (for global scale)
+- **Web App**: Vercel (or any static host / Cloudflare Pages)
+- **WebSocket Server**: PartyKit free tier (20 rooms, 100 connections/room)
+- **Chrome Extension**: local install (Chrome Web Store planned)
 
-When scaling beyond free tier limits, the plan is to migrate everything to Cloudflare:
+## Tech Stack
 
-### Why Cloudflare
-- **Cloudflare Pages** (web app): free, unlimited bandwidth, global CDN
-- **Cloudflare Workers + Durable Objects** (WebSocket): ~$5/month, massive scale
-- Total cost: **~$5/month** to serve thousands of professors worldwide
+- **Chrome Extension** -- Manifest V3, content scripts, `chrome.tabCapture`
+- **WebSocket Server** -- [PartyKit](https://partykit.io/) by Sunil Pai
+- **Web App** -- Next.js 14, React, Tailwind CSS, partysocket
+- **QR Codes** -- [qrcodejs](https://github.com/davidshimjs/qrcodejs)
 
-### Migration Steps
-1. **Web App** → Cloudflare Pages
-   - Use `@cloudflare/next-on-pages` adapter, or simplify to static HTML/JS (the app is simple enough)
-   - `wrangler pages deploy` instead of `vercel deploy`
+## Contributing
 
-2. **WebSocket Server** → Cloudflare Workers + Durable Objects
-   - Rewrite `party-server/server.ts` as a Durable Object (same logic, different API)
-   - Each room = one Durable Object instance (same concept as PartyKit rooms)
-   - PartyKit actually runs on Cloudflare under the hood, so the migration is straightforward
-
-3. **Chrome Extension** → Chrome Web Store ($5 one-time fee)
-
-### Estimated Cost at Scale
-| Service | Cost |
-|---------|------|
-| Cloudflare Pages | $0 |
-| Cloudflare Workers + Durable Objects | ~$5/month |
-| Chrome Web Store | $5 one-time |
-| Custom domain (optional) | ~$10/year |
-| **Total** | **~$5/month** |
-
-## Future: Remote for Slides Features
-
-The goal is to also include the remote control features that Remote for Slides provides:
-
-- [ ] **Remote slide control** — control slides from a phone/tablet (next/previous)
-- [ ] **Speaker notes** — view speaker notes on the remote device
-- [ ] **Timer** — presentation timer on the remote device
-- [ ] **Pointer/laser** — virtual laser pointer from the remote device
-- [ ] **Dark mode** — for the student view and remote control
-
-These features would make Slide Sync a complete replacement: real-time slide sharing for students + remote control for the professor, all in one extension.
-
-## Credits
-
-- **[Henry Lim](https://limhenry.xyz/)** — Creator of [Remote for Slides](https://limhenry.xyz/slides/). The UI patterns, toolbar injection technique, and slide detection method used in this project were learned from studying his extension. [Support him on Patreon](https://www.patreon.com/remoteforslides).
-- **[PartyKit](https://partykit.io/)** — Free WebSocket infrastructure by Sunil Pai.
-- **[qrcodejs](https://github.com/davidshimjs/qrcodejs)** — QR code generation library.
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT
+[MIT](LICENSE)
+
+## Credits
+
+- **[Henry Lim](https://limhenry.xyz/)** -- Creator of [Remote for Slides](https://limhenry.xyz/slides/). The UI patterns, toolbar injection technique, and slide detection method were learned from studying his extension. [Support him on Patreon](https://www.patreon.com/remoteforslides).
+- **[PartyKit](https://partykit.io/)** -- Free WebSocket infrastructure by Sunil Pai.
+- **[qrcodejs](https://github.com/davidshimjs/qrcodejs)** -- QR code generation library.

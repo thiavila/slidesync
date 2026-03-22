@@ -1,3 +1,11 @@
+// i18n
+const msg = (key) => chrome.i18n.getMessage(key) || key;
+document.getElementById("no-active-session").textContent = msg("noActiveSession");
+document.getElementById("open-presentation-hint").textContent = msg("openPresentationHint");
+document.getElementById("active-session").textContent = msg("activeSession");
+document.getElementById("room-code-label").textContent = msg("roomCodeLabel");
+document.getElementById("current-slide-label").textContent = msg("currentSlideLabel");
+
 const inactiveView = document.getElementById("inactive-view");
 const activeView = document.getElementById("active-view");
 const roomCodeEl = document.getElementById("roomCode");

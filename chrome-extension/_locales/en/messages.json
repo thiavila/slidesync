@@ -1,0 +1,18 @@
+{
+  "extName": { "message": "Slide Sync" },
+  "extDescription": { "message": "Share your class slides in real-time with students" },
+  "noActiveSession": { "message": "No active session" },
+  "openPresentationHint": { "message": "Open a Google Slides presentation to get started." },
+  "activeSession": { "message": "Active session" },
+  "roomCodeLabel": { "message": "Room code" },
+  "currentSlideLabel": { "message": "Current slide" },
+  "drawerSubtitle": { "message": "Share your slides in real-time" },
+  "statusDisconnected": { "message": "Disconnected" },
+  "statusActive": { "message": "Active" },
+  "startSession": { "message": "Start session" },
+  "stopSession": { "message": "End session" },
+  "presentButton": { "message": "Present w/ Slide Sync" },
+  "presentButtonAria": { "message": "Present with Slide Sync" },
+  "inspiredBy": { "message": "Inspired by" },
+  "sponsor": { "message": "Sponsor" }
+}

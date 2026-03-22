@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "@/lib/i18n/use-translations";
 
 interface AnnotationToolbarProps {
   activeTool: "pen" | "eraser" | "text";
@@ -15,9 +16,9 @@ interface AnnotationToolbarProps {
 
 const PRESET_COLORS = ["#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#000000"];
 const LINE_WIDTHS = [
-  { value: 0.002, label: "Fina" },
-  { value: 0.004, label: "Media" },
-  { value: 0.008, label: "Grossa" },
+  { value: 0.002, labelKey: "toolbar.thin" },
+  { value: 0.004, labelKey: "toolbar.medium" },
+  { value: 0.008, labelKey: "toolbar.thick" },
 ];
 
 export default function AnnotationToolbar({
@@ -30,6 +31,7 @@ export default function AnnotationToolbar({
   onUndo,
   onClear,
 }: AnnotationToolbarProps) {
+  const { t } = useTranslations();
   const [showColors, setShowColors] = useState(false);
   const [showSizes, setShowSizes] = useState(false);
 
@@ -43,7 +45,7 @@ export default function AnnotationToolbar({
             ? "bg-blue-100 text-blue-600"
             : "hover:bg-gray-100 text-gray-600"
         }`}
-        title="Caneta"
+        title={t("toolbar.pen")}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -59,7 +61,7 @@ export default function AnnotationToolbar({
             ? "bg-blue-100 text-blue-600"
             : "hover:bg-gray-100 text-gray-600"
         }`}
-        title="Texto"
+        title={t("toolbar.text")}
       >
         T
       </button>
@@ -72,7 +74,7 @@ export default function AnnotationToolbar({
             ? "bg-blue-100 text-blue-600"
             : "hover:bg-gray-100 text-gray-600"
         }`}
-        title="Borracha"
+        title={t("toolbar.eraser")}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21" />
@@ -89,7 +91,7 @@ export default function AnnotationToolbar({
         <button
           onClick={() => { setShowSizes(!showSizes); setShowColors(false); }}
           className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-gray-100 transition"
-          title="Espessura"
+          title={t("toolbar.lineWidth")}
         >
           <div className="flex flex-col items-center gap-[3px]">
             <div className="bg-gray-600 rounded-full" style={{ width: 14, height: lineWidth === 0.002 ? 2 : lineWidth === 0.004 ? 3 : 5 }} />
@@ -110,7 +112,7 @@ export default function AnnotationToolbar({
                 }`}
               >
                 <div className="bg-current rounded-full" style={{ width: 20, height: lw.value * 500 }} />
-                {lw.label}
+                {t(lw.labelKey)}
               </button>
             ))}
           </div>
@@ -122,7 +124,7 @@ export default function AnnotationToolbar({
         <button
           onClick={() => { setShowColors(!showColors); setShowSizes(false); }}
           className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-gray-100 transition"
-          title="Cor"
+          title={t("toolbar.color")}
         >
           <div
             className="w-6 h-6 rounded-full border-2 border-gray-300"
@@ -168,7 +170,7 @@ export default function AnnotationToolbar({
       <button
         onClick={onUndo}
         className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-gray-100 text-gray-600 transition"
-        title="Desfazer"
+        title={t("toolbar.undo")}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 7v6h6" />
@@ -180,7 +182,7 @@ export default function AnnotationToolbar({
       <button
         onClick={onClear}
         className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-red-50 text-red-500 transition"
-        title="Limpar tudo"
+        title={t("toolbar.clearAll")}
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6h18" />

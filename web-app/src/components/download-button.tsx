@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { exportAsPdf } from "@/lib/annotations/export";
+import { useTranslations } from "@/lib/i18n/use-translations";
 
 interface DownloadButtonProps {
   roomCode: string;
@@ -14,12 +15,13 @@ export default function DownloadButton({
   slides,
   currentSlide,
 }: DownloadButtonProps) {
+  const { t } = useTranslations();
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
 
   const handleDownload = async () => {
     setLoading(true);
-    setProgress("Preparando...");
+    setProgress(t("download.preparing"));
 
     try {
       await exportAsPdf({
@@ -32,7 +34,7 @@ export default function DownloadButton({
       });
     } catch (err) {
       console.error("Export error:", err);
-      alert("Erro ao exportar. Tente novamente.");
+      alert(t("download.error"));
     } finally {
       setLoading(false);
       setProgress("");
@@ -49,7 +51,7 @@ export default function DownloadButton({
     <button
       onClick={handleDownload}
       className="text-gray-600 hover:text-gray-900 transition p-1"
-      title="Baixar PDF"
+      title={t("download.title")}
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />

@@ -1,4 +1,8 @@
 (() => {
+  const PARTY_SERVER = "slide-sync.thiavila.partykit.dev";
+  const WEBAPP_URL = "https://slidesync.live";
+  const msg = (key) => chrome.i18n.getMessage(key) || key;
+
   const pathname = window.location.pathname;
   const isPresentPage = /\/present(\/|$)/.test(pathname);
   const isEditPage = !isPresentPage;
@@ -81,18 +85,10 @@
           </div>
           <div class="slidesync-drawer-content">
             <div class="slidesync-title">Slide Sync</div>
-            <div class="slidesync-subtitle">Compartilhe seus slides em tempo real</div>
-
-            <label class="slidesync-field-label">Servidor PartyKit</label>
-            <input type="text" class="slidesync-server-input" id="slidesync-server"
-                   placeholder="slide-sync.thiavila.partykit.dev" value="slide-sync.thiavila.partykit.dev" />
-
-            <label class="slidesync-field-label">URL do Web App</label>
-            <input type="text" class="slidesync-server-input" id="slidesync-webapp"
-                   placeholder="https://web-app-khaki-ten.vercel.app" value="https://web-app-khaki-ten.vercel.app" />
+            <div class="slidesync-subtitle">${msg("drawerSubtitle")}</div>
 
             <div class="slidesync-code-container">
-              <div class="slidesync-code-label">Codigo da sala</div>
+              <div class="slidesync-code-label">${msg("roomCodeLabel")}</div>
               <div class="slidesync-code-value" id="slidesync-code">------</div>
             </div>
 
@@ -105,35 +101,26 @@
 
             <div class="slidesync-status">
               <span class="dot inactive" id="slidesync-dot"></span>
-              <span id="slidesync-status">Desconectado</span>
+              <span id="slidesync-status">${msg("statusDisconnected")}</span>
             </div>
 
-            <button primary id="slidesync-start">Iniciar sessao</button>
-            <button class="danger" id="slidesync-stop" style="display:none;">Encerrar sessao</button>
+            <button primary id="slidesync-start">${msg("startSession")}</button>
+            <button class="danger" id="slidesync-stop" style="display:none;">${msg("stopSession")}</button>
 
             <div class="slidesync-footer">
-              Slide Sync v2.0
+              Slide Sync v2.1
               <div class="slidesync-credits">
-                Inspired by <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
+                ${msg("inspiredBy")} <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
                 by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
-                <br/>
-                <a href="https://www.patreon.com/remoteforslides" target="_blank">Support him, not me. Henry made this possible.</a>
+              </div>
+              <div class="slidesync-sponsor">
+                <a href="https://github.com/sponsors/thiavila" target="_blank">&#9829; ${msg("sponsor")}</a>
               </div>
             </div>
           </div>
         </div>
       `;
       document.body.appendChild(container);
-
-      // Load saved settings
-      chrome.storage.local.get(["partyServer", "webappUrl"], (result) => {
-        if (result.partyServer) {
-          document.getElementById("slidesync-server").value = result.partyServer;
-        }
-        if (result.webappUrl) {
-          document.getElementById("slidesync-webapp").value = result.webappUrl;
-        }
-      });
 
       // Mouseover area shows toggle
       container.querySelector(".slidesync-mouseover-area").addEventListener("mouseenter", () => {
@@ -178,11 +165,9 @@
         if (result.isActive && result.roomCode) {
           document.getElementById("slidesync-code").textContent = result.roomCode;
           document.getElementById("slidesync-dot").classList.remove("inactive");
-          document.getElementById("slidesync-status").textContent = "Ativo";
+          document.getElementById("slidesync-status").textContent = msg("statusActive");
           document.getElementById("slidesync-start").style.display = "none";
           document.getElementById("slidesync-stop").style.display = "block";
-          document.getElementById("slidesync-server").disabled = true;
-          document.getElementById("slidesync-webapp").disabled = true;
           showQRCode(result.roomCode);
         }
       });
@@ -193,8 +178,7 @@
     }
 
     function showQRCode(roomCode) {
-      const webapp = document.getElementById("slidesync-webapp").value.trim();
-      const sessionUrl = `${webapp}/session/${roomCode}`;
+      const sessionUrl = `${WEBAPP_URL}/session/${roomCode}`;
       const qrSection = document.getElementById("slidesync-qr-section");
       const qrContainer = document.getElementById("slidesync-qr");
       const urlEl = document.getElementById("slidesync-url");
@@ -213,17 +197,11 @@
     }
 
     function startSession() {
-      const server = document.getElementById("slidesync-server").value.trim();
-      const webapp = document.getElementById("slidesync-webapp").value.trim();
-      if (!server) return;
-
       const roomCode = generateRoomCode();
-      const protocol = server.startsWith("localhost") ? "ws" : "wss";
-      const wsUrl = `${protocol}://${server}/parties/main/${roomCode}`;
+      const protocol = PARTY_SERVER.startsWith("localhost") ? "ws" : "wss";
+      const wsUrl = `${protocol}://${PARTY_SERVER}/parties/main/${roomCode}`;
 
       chrome.storage.local.set({
-        partyServer: server,
-        webappUrl: webapp,
         roomCode: roomCode,
         wsUrl: wsUrl,
         isActive: true,
@@ -237,11 +215,9 @@
 
       document.getElementById("slidesync-code").textContent = roomCode;
       document.getElementById("slidesync-dot").classList.remove("inactive");
-      document.getElementById("slidesync-status").textContent = "Ativo";
+      document.getElementById("slidesync-status").textContent = msg("statusActive");
       document.getElementById("slidesync-start").style.display = "none";
       document.getElementById("slidesync-stop").style.display = "block";
-      document.getElementById("slidesync-server").disabled = true;
-      document.getElementById("slidesync-webapp").disabled = true;
 
       showQRCode(roomCode);
     }
@@ -252,11 +228,9 @@
 
       document.getElementById("slidesync-code").textContent = "------";
       document.getElementById("slidesync-dot").classList.add("inactive");
-      document.getElementById("slidesync-status").textContent = "Desconectado";
+      document.getElementById("slidesync-status").textContent = msg("statusDisconnected");
       document.getElementById("slidesync-start").style.display = "block";
       document.getElementById("slidesync-stop").style.display = "none";
-      document.getElementById("slidesync-server").disabled = false;
-      document.getElementById("slidesync-webapp").disabled = false;
       document.getElementById("slidesync-qr-section").style.display = "none";
       document.getElementById("slidesync-qr").innerHTML = "";
     }
@@ -302,9 +276,9 @@
     function injectButton(presentContainer) {
       const btn = document.createElement("a");
       btn.id = "slidesync-present-btn";
-      btn.textContent = "Present w/ Slide Sync";
-      btn.setAttribute("aria-label", "Present with Slide Sync");
-      btn.setAttribute("data-tooltip", "Present with Slide Sync");
+      btn.textContent = msg("presentButton");
+      btn.setAttribute("aria-label", msg("presentButtonAria"));
+      btn.setAttribute("data-tooltip", msg("presentButtonAria"));
       btn.href = window.location.href.replace("edit", "present");
       btn.target = "_blank";
       btn.addEventListener("click", () => {
