@@ -1,6 +1,6 @@
 {
   "extName": { "message": "Slide Sync" },
-  "extDescription": { "message": "授業のスライドをリアルタイムで学生と共有" },
+  "extDescription": { "message": "プレゼンテーションをリアルタイムで共有" },
   "noActiveSession": { "message": "アクティブなセッションなし" },
   "openPresentationHint": { "message": "Google スライドのプレゼンテーションを開いて始めましょう。" },
   "activeSession": { "message": "セッション中" },

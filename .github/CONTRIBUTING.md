@@ -1,6 +1,6 @@
 # Contributing to Slide Sync
 
-Thanks for your interest in contributing! This project is a real-time slide synchronization tool for classrooms, and we welcome pull requests of all kinds.
+Thanks for your interest in contributing! This project is a real-time slide sharing tool, and we welcome pull requests of all kinds.
 
 ## Project Structure
 
@@ -9,7 +9,7 @@ Slide Sync has three components:
 | Component | Directory | Description |
 |---|---|---|
 | Chrome Extension | `chrome-extension/` | Captures slides from the presenter's browser |
-| Web App | `web-app/` | Next.js app that displays slides to students |
+| Web App | `web-app/` | Next.js app that displays slides to viewers |
 | Party Server | `party-server/` | PartyKit WebSocket server that relays data |
 
 ## Setting Up the Dev Environment

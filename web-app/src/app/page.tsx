@@ -288,6 +288,19 @@ export default function Home() {
               {t("home.openSource")}
             </div>
 
+            {/* Sponsor message */}
+            <p className="text-sm text-gray-500 max-w-md">
+              {t("home.sponsorMessage")}{" "}
+              <a
+                href="https://github.com/sponsors/thiavila"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                &#9829; {t("home.sponsorCta")}
+              </a>
+            </p>
+
             {/* Credits */}
             <p className="text-sm text-gray-500">
               {t("home.inspiredBy")}{" "}
@@ -300,19 +313,6 @@ export default function Home() {
                 Remote for Slides
               </a>{" "}
               by Henry Lim.
-            </p>
-
-            {/* Sponsor message */}
-            <p className="text-sm text-gray-500 max-w-md">
-              {t("home.sponsorMessage")}{" "}
-              <a
-                href="https://github.com/sponsors/thiavila"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                &#9829; {t("home.sponsorCta")}
-              </a>
             </p>
 
             {/* Footer links */}
@@ -331,7 +331,7 @@ export default function Home() {
                 rel="noopener noreferrer"
                 className="hover:text-gray-700 transition"
               >
-                {t("home.sponsor")}
+                {t("home.sponsorCta")}
               </a>
               <Link
                 href="/privacy"

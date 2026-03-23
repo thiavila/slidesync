@@ -64,7 +64,7 @@ export default function RoomCodeInput({
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             disabled={loading}
-            className="w-12 h-14 text-center text-2xl font-mono border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none disabled:opacity-50"
+            className="w-12 h-14 text-center text-2xl font-mono text-gray-900 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none disabled:opacity-50"
           />
         ))}
       </div>

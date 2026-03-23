@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Slide Sync",
-  description: "Share your class slides in real-time with students",
+  description: "Share your presentations in real-time with your audience",
 };
 
 export default function RootLayout({

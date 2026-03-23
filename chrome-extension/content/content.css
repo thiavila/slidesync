@@ -234,16 +234,16 @@
 
 /* Footer */
 .slidesync-drawer .slidesync-footer {
-  font-size: 11px;
   text-align: center;
-  color: #888;
   margin-top: auto;
   padding-top: 16px;
 }
 
 .slidesync-drawer .slidesync-credits {
-  margin-top: 8px;
-  line-height: 1.6;
+  font-size: 12px;
+  color: #bbb;
+  line-height: 1.5;
+  margin-top: 10px;
 }
 
 .slidesync-drawer .slidesync-credits a {
@@ -255,14 +255,21 @@
   text-decoration: underline;
 }
 
+.slidesync-drawer .slidesync-version {
+  font-size: 10px;
+  color: #666;
+  margin-top: 10px;
+}
+
 .slidesync-drawer .slidesync-sponsor {
-  margin-top: 8px;
+  font-size: 12px;
+  color: #bbb;
+  line-height: 1.5;
 }
 
 .slidesync-drawer .slidesync-sponsor a {
   color: #ffb806;
   text-decoration: none;
-  font-size: 12px;
 }
 
 .slidesync-drawer .slidesync-sponsor a:hover {

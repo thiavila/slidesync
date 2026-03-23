@@ -108,15 +108,15 @@
             <button class="danger" id="slidesync-stop" style="display:none;">${msg("stopSession")}</button>
 
             <div class="slidesync-footer">
-              Slide Sync v2.1
-              <div class="slidesync-credits">
-                ${msg("inspiredBy")} <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
-                by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
-              </div>
               <div class="slidesync-sponsor">
                 ${msg("sponsorMessage")}
                 <a href="https://github.com/sponsors/thiavila" target="_blank">&#9829; ${msg("sponsorCta")}</a>
               </div>
+              <div class="slidesync-credits">
+                ${msg("inspiredBy")} <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
+                by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
+              </div>
+              <div class="slidesync-version">Slide Sync v2.1</div>
             </div>
           </div>
         </div>
@@ -250,9 +250,14 @@
     // Inject drawer UI
     injectDrawer();
 
-    // Auto-fullscreen: enter on interaction, re-enter if exited
+    // Auto-fullscreen: re-enter on every interaction (handles Esc exit)
+    let userHasInteracted = false;
+    function markInteracted() { userHasInteracted = true; }
+    document.addEventListener("click", markInteracted, { once: true });
+    document.addEventListener("keydown", markInteracted, { once: true });
+
     function ensureFullscreen() {
-      if (!document.fullscreenElement) {
+      if (userHasInteracted && !document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
       }
     }

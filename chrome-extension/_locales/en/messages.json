@@ -1,6 +1,6 @@
 {
   "extName": { "message": "Slide Sync" },
-  "extDescription": { "message": "Share your class slides in real-time with students" },
+  "extDescription": { "message": "Share your presentations in real-time with your audience" },
   "noActiveSession": { "message": "No active session" },
   "openPresentationHint": { "message": "Open a Google Slides presentation to get started." },
   "activeSession": { "message": "Active session" },
@@ -14,6 +14,6 @@
   "presentButton": { "message": "Present w/ Slide Sync" },
   "presentButtonAria": { "message": "Present with Slide Sync" },
   "inspiredBy": { "message": "Inspired by" },
-  "sponsorMessage": { "message": "Running Slide Sync costs about $10/month. If it's been helpful in your presentations, a small contribution means the world." },
+  "sponsorMessage": { "message": "Running Slide Sync costs about $$10/month. If it's been helpful in your presentations, a small contribution means the world." },
   "sponsorCta": { "message": "Become a sponsor" }
 }

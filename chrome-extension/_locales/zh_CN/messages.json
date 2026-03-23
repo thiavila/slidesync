@@ -1,6 +1,6 @@
 {
   "extName": { "message": "Slide Sync" },
-  "extDescription": { "message": "与学生实时共享课堂幻灯片" },
+  "extDescription": { "message": "实时共享您的演示文稿" },
   "noActiveSession": { "message": "没有活动会话" },
   "openPresentationHint": { "message": "打开 Google 幻灯片演示文稿即可开始。" },
   "activeSession": { "message": "会话进行中" },

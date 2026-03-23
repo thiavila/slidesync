@@ -1,6 +1,6 @@
 {
   "extName": { "message": "Slide Sync" },
-  "extDescription": { "message": "Partagez vos diapositives en temps réel avec vos étudiants" },
+  "extDescription": { "message": "Partagez vos présentations en temps réel avec votre audience" },
   "noActiveSession": { "message": "Aucune session active" },
   "openPresentationHint": { "message": "Ouvrez une présentation Google Slides pour commencer." },
   "activeSession": { "message": "Session active" },
@@ -14,6 +14,6 @@
   "presentButton": { "message": "Présenter avec Slide Sync" },
   "presentButtonAria": { "message": "Présenter avec Slide Sync" },
   "inspiredBy": { "message": "Inspiré par" },
-  "sponsorMessage": { "message": "Faire tourner Slide Sync coûte environ 10 $/mois. Si cet outil vous a été utile dans vos présentations, une petite contribution fait toute la différence." },
+  "sponsorMessage": { "message": "Faire tourner Slide Sync coûte environ 10 $$/mois. Si cet outil vous a été utile dans vos présentations, une petite contribution fait toute la différence." },
   "sponsorCta": { "message": "Devenir sponsor" }
 }

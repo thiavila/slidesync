@@ -3,18 +3,18 @@
 ## English (main)
 
 ```
-Slide Sync — Share your Google Slides presentations in real-time with students.
+Slide Sync — Share your Google Slides presentations in real-time with your audience.
 
 HOW IT WORKS
 1. Install Slide Sync and open a Google Slides presentation
 2. Click "Present w/ Slide Sync" to start presenting
-3. Students scan the QR code or enter a 6-digit room code on their devices
-4. Slides sync automatically — students see exactly what you're presenting
+3. Viewers scan the QR code or enter a 6-digit room code on their devices
+4. Slides sync automatically — your audience sees exactly what you're presenting
 
 FEATURES
 - Real-time slide synchronization with zero delay
-- QR code for instant student access — no accounts or setup needed
-- Students can annotate slides (pen, text, eraser) and export as PDF
+- QR code for instant viewer access — no accounts or setup needed
+- Viewers can annotate slides (pen, text, eraser) and export as PDF
 - Works on any device with a browser (phones, tablets, laptops)
 - Completely free and open source
 
@@ -34,18 +34,18 @@ Open source: https://github.com/thiavila/slide-sync
 ## Portuguese
 
 ```
-Slide Sync — Compartilhe seus slides do Google em tempo real com seus alunos.
+Slide Sync — Compartilhe suas apresentações em tempo real com sua audiência.
 
 COMO FUNCIONA
 1. Instale o Slide Sync e abra uma apresentacao no Google Slides
 2. Clique em "Apresentar c/ Slide Sync" para comecar a apresentar
-3. Alunos escaneiam o QR code ou digitam o codigo de 6 digitos no celular
-4. Os slides sincronizam automaticamente — alunos veem exatamente o que voce esta apresentando
+3. Espectadores escaneiam o QR code ou digitam o codigo de 6 digitos no celular
+4. Os slides sincronizam automaticamente — sua audiência vê exatamente o que voce esta apresentando
 
 RECURSOS
 - Sincronizacao de slides em tempo real sem atraso
 - QR code para acesso instantaneo — sem conta ou configuracao
-- Alunos podem anotar slides (caneta, texto, borracha) e exportar como PDF
+- Espectadores podem anotar slides (caneta, texto, borracha) e exportar como PDF
 - Funciona em qualquer dispositivo com navegador (celulares, tablets, notebooks)
 - Totalmente gratuito e open source
 

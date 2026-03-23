@@ -17,7 +17,7 @@ If you discover a security vulnerability in Slide Sync, please report it by:
 This policy covers the following components:
 
 - **Chrome Extension** — captures and sends slide images
-- **Web App** — displays slides to students in real time
+- **Web App** — displays slides to viewers in real time
 - **PartyKit Server** — relays data between the extension and the web app via WebSocket
 
 ## Architecture Note

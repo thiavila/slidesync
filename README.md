@@ -1,18 +1,18 @@
 # Slide Sync
 
-Real-time slide synchronization for classrooms. Teachers present on Google Slides; students follow along on their own devices.
+Real-time slide sharing. Present on Google Slides; your audience follows along on their own devices.
 
 ## Overview
 
-Slide Sync lets a teacher broadcast their Google Slides presentation to every student in the room, in real-time. Students see slides update instantly on their phones, tablets, or laptops -- no login required. They can annotate slides and export them as PDF for later review.
+Slide Sync lets a presenter broadcast their Google Slides presentation to every viewer in the room, in real-time. Viewers see slides update instantly on their phones, tablets, or laptops -- no login required. They can annotate slides and export them as PDF for later review.
 
-Built by a professor, for professors. Inspired by [Remote for Slides](https://limhenry.xyz/slides/) by [Henry Lim](https://limhenry.xyz/).
+Inspired by [Remote for Slides](https://limhenry.xyz/slides/) by [Henry Lim](https://limhenry.xyz/).
 
 ## Architecture
 
 ```
 Chrome Extension              PartyKit Server              Web App (Next.js)
-(Google Slides)                (WebSocket relay)            (Student view)
+(Google Slides)                (WebSocket relay)            (Viewer)
       |                              |                            |
       |--- screenshot (base64) ----->|                            |
       |                              |--- broadcast ------------>|
@@ -25,16 +25,16 @@ Three components, zero database -- all state is ephemeral and lives in memory.
 | Component | Purpose | Tech |
 |---|---|---|
 | **Chrome Extension** | Captures screenshots on each slide change, sends via WebSocket | Manifest V3 |
-| **PartyKit Server** | Relays screenshots between teacher and students | PartyKit (Cloudflare Workers) |
-| **Web App** | Students view and annotate slides in real-time | Next.js, Tailwind CSS |
+| **PartyKit Server** | Relays screenshots between presenter and viewers | PartyKit (Cloudflare Workers) |
+| **Web App** | Viewers watch and annotate slides in real-time | Next.js, Tailwind CSS |
 
 ## Features
 
-- **Real-time sync** -- slides update on every device the moment the teacher advances
+- **Real-time sync** -- slides update on every device the moment the presenter advances
 - **Screenshot-based** -- captures actual screen content, so animations and step-by-step builds just work
-- **Annotations** -- students can draw, highlight, and write notes on any slide
-- **PDF export** -- download slides with personal annotations for review after class
-- **No login required** -- students just enter a 6-digit room code or scan a QR code
+- **Annotations** -- viewers can draw, highlight, and write notes on any slide
+- **PDF export** -- download slides with personal annotations for later review
+- **No login required** -- viewers just enter a 6-digit room code or scan a QR code
 - **i18n** -- supports English and Brazilian Portuguese, auto-detected from browser
 
 ## Getting Started (for users)
@@ -42,8 +42,8 @@ Three components, zero database -- all state is ephemeral and lives in memory.
 1. Install the Slide Sync Chrome extension
 2. Open a presentation in Google Slides
 3. Click **"Present w/ Slide Sync"** in the toolbar
-4. Share the room code or QR code with students
-5. Students open the web app, enter the code, and follow along
+4. Share the room code or QR code with your audience
+5. Viewers open the web app, enter the code, and follow along
 
 ## Development Setup
 
