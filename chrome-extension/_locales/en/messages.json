@@ -14,5 +14,6 @@
   "presentButton": { "message": "Present w/ Slide Sync" },
   "presentButtonAria": { "message": "Present with Slide Sync" },
   "inspiredBy": { "message": "Inspired by" },
-  "sponsor": { "message": "Sponsor" }
+  "sponsorMessage": { "message": "Running Slide Sync costs about $10/month. If it's been helpful in your presentations, a small contribution means the world." },
+  "sponsorCta": { "message": "Become a sponsor" }
 }

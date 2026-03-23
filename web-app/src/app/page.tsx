@@ -302,6 +302,19 @@ export default function Home() {
               by Henry Lim.
             </p>
 
+            {/* Sponsor message */}
+            <p className="text-sm text-gray-500 max-w-md">
+              {t("home.sponsorMessage")}{" "}
+              <a
+                href="https://github.com/sponsors/thiavila"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                &#9829; {t("home.sponsorCta")}
+              </a>
+            </p>
+
             {/* Footer links */}
             <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
               <a

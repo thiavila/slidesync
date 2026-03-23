@@ -114,7 +114,8 @@
                 by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
               </div>
               <div class="slidesync-sponsor">
-                <a href="https://github.com/sponsors/thiavila" target="_blank">&#9829; ${msg("sponsor")}</a>
+                ${msg("sponsorMessage")}
+                <a href="https://github.com/sponsors/thiavila" target="_blank">&#9829; ${msg("sponsorCta")}</a>
               </div>
             </div>
           </div>
