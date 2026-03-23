@@ -3,6 +3,7 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import type { Stroke, TextNote, SlideAnnotation, Point } from "@/lib/annotations/types";
 import { renderAnnotations } from "@/lib/annotations/canvas-engine";
+import { useTranslations } from "@/lib/i18n/use-translations";
 
 interface SafariTouch extends Touch {
   touchType?: "direct" | "stylus";
@@ -39,6 +40,7 @@ export default function AnnotationCanvas({
   onTextNote,
   onInteract,
 }: AnnotationCanvasProps) {
+  const { t } = useTranslations();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -329,7 +331,7 @@ export default function AnnotationCanvas({
             minWidth: 120,
             color,
           }}
-          placeholder="Digite aqui..."
+          placeholder={t("viewer.textPlaceholder")}
         />
       )}
       <span className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">

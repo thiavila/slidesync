@@ -1,0 +1,19 @@
+{
+  "extName": { "message": "Slide Sync" },
+  "extDescription": { "message": "अपनी कक्षा की स्लाइड्स छात्रों के साथ रियल-टाइम में साझा करें" },
+  "noActiveSession": { "message": "कोई सक्रिय सत्र नहीं" },
+  "openPresentationHint": { "message": "शुरू करने के लिए Google Slides प्रेजेंटेशन खोलें।" },
+  "activeSession": { "message": "सत्र सक्रिय" },
+  "roomCodeLabel": { "message": "रूम कोड" },
+  "currentSlideLabel": { "message": "वर्तमान स्लाइड" },
+  "drawerSubtitle": { "message": "अपनी स्लाइड्स रियल-टाइम में साझा करें" },
+  "statusDisconnected": { "message": "डिस्कनेक्ट" },
+  "statusActive": { "message": "कनेक्टेड" },
+  "startSession": { "message": "सत्र शुरू करें" },
+  "stopSession": { "message": "सत्र समाप्त करें" },
+  "presentButton": { "message": "Slide Sync से प्रेजेंट करें" },
+  "presentButtonAria": { "message": "Slide Sync से प्रेजेंटेशन करें" },
+  "inspiredBy": { "message": "प्रेरित" },
+  "sponsorMessage": { "message": "Slide Sync को चलाने में हर महीने लगभग $10 का खर्च आता है। अगर यह आपकी प्रेजेंटेशन में मददगार रहा है, तो एक छोटा सा सहयोग बहुत मायने रखता है।" },
+  "sponsorCta": { "message": "स्पॉन्सर बनें" }
+}

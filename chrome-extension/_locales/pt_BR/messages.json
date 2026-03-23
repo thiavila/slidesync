@@ -14,5 +14,6 @@
   "presentButton": { "message": "Apresentar c/ Slide Sync" },
   "presentButtonAria": { "message": "Apresentar com Slide Sync" },
   "inspiredBy": { "message": "Inspirado por" },
-  "sponsor": { "message": "Sponsor" }
+  "sponsorMessage": { "message": "Manter o Slide Sync custa cerca de $10/mês. Se ele tem sido útil nas suas apresentações, qualquer contribuição faz toda a diferença." },
+  "sponsorCta": { "message": "Seja um patrocinador" }
 }
