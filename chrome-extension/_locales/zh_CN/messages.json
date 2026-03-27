@@ -1,0 +1,19 @@
+{
+  "extName": { "message": "slidesync" },
+  "extDescription": { "message": "实时共享您的演示文稿" },
+  "noActiveSession": { "message": "没有活动会话" },
+  "openPresentationHint": { "message": "打开 Google 幻灯片演示文稿即可开始。" },
+  "activeSession": { "message": "会话进行中" },
+  "roomCodeLabel": { "message": "房间代码" },
+  "currentSlideLabel": { "message": "当前幻灯片" },
+  "drawerSubtitle": { "message": "实时共享您的幻灯片" },
+  "statusDisconnected": { "message": "未连接" },
+  "statusActive": { "message": "已连接" },
+  "startSession": { "message": "开始会话" },
+  "stopSession": { "message": "结束会话" },
+  "presentButton": { "message": "使用 slidesync 演示" },
+  "presentButtonAria": { "message": "使用 slidesync 进行演示" },
+  "inspiredBy": { "message": "灵感来自" },
+  "sponsorMessage": { "message": "运营 slidesync 每月大约需要10美元。如果它对您的演示有帮助，一点小小的贡献对我意义重大。" },
+  "sponsorCta": { "message": "成为赞助者" }
+}

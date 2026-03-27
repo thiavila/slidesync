@@ -1,0 +1,19 @@
+{
+  "extName": { "message": "slidesync" },
+  "extDescription": { "message": "Partagez vos présentations en temps réel avec votre audience" },
+  "noActiveSession": { "message": "Aucune session active" },
+  "openPresentationHint": { "message": "Ouvrez une présentation Google Slides pour commencer." },
+  "activeSession": { "message": "Session active" },
+  "roomCodeLabel": { "message": "Code de salle" },
+  "currentSlideLabel": { "message": "Diapositive actuelle" },
+  "drawerSubtitle": { "message": "Partagez vos diapositives en temps réel" },
+  "statusDisconnected": { "message": "Déconnecté" },
+  "statusActive": { "message": "Actif" },
+  "startSession": { "message": "Démarrer la session" },
+  "stopSession": { "message": "Terminer la session" },
+  "presentButton": { "message": "Présenter avec slidesync" },
+  "presentButtonAria": { "message": "Présenter avec slidesync" },
+  "inspiredBy": { "message": "Inspiré par" },
+  "sponsorMessage": { "message": "Faire tourner slidesync coûte environ 10 $$/mois. Si cet outil vous a été utile dans vos présentations, une petite contribution fait toute la différence." },
+  "sponsorCta": { "message": "Devenir sponsor" }
+}

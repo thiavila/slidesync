@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>slidesync</h1>
+
+    <div id="inactive-view">
+      <div class="status disconnected">
+        <span class="dot"></span>
+        <span id="no-active-session"></span>
+      </div>
+      <p class="hint" id="open-presentation-hint"></p>
+    </div>
+
+    <div id="active-view" class="hidden">
+      <div class="status connected">
+        <span class="dot"></span>
+        <span id="active-session"></span>
+      </div>
+      <div class="room-code">
+        <div class="label" id="room-code-label"></div>
+        <div class="code" id="roomCode">------</div>
+      </div>
+      <div class="info-row">
+        <span class="label" id="current-slide-label"></span>
+        <span id="currentSlide" class="value">-</span>
+      </div>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "extName": { "message": "slidesync" },
+  "extDescription": { "message": "プレゼンテーションをリアルタイムで共有" },
+  "noActiveSession": { "message": "アクティブなセッションなし" },
+  "openPresentationHint": { "message": "Google スライドのプレゼンテーションを開いて始めましょう。" },
+  "activeSession": { "message": "セッション中" },
+  "roomCodeLabel": { "message": "ルームコード" },
+  "currentSlideLabel": { "message": "現在のスライド" },
+  "drawerSubtitle": { "message": "スライドをリアルタイムで共有" },
+  "statusDisconnected": { "message": "未接続" },
+  "statusActive": { "message": "接続中" },
+  "startSession": { "message": "セッション開始" },
+  "stopSession": { "message": "セッション終了" },
+  "presentButton": { "message": "slidesync でプレゼン" },
+  "presentButtonAria": { "message": "slidesync でプレゼンテーション" },
+  "inspiredBy": { "message": "インスパイア元" },
+  "sponsorMessage": { "message": "slidesync の運営には月約10ドルかかります。プレゼンテーションで役立っていたら、少しのご支援がとても励みになります。" },
+  "sponsorCta": { "message": "スポンサーになる" }
+}

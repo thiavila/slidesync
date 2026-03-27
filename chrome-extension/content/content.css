@@ -1,0 +1,283 @@
+/* ===== EDIT MODE: Toolbar Button (like Remote for Slides) ===== */
+#slidesync-present-btn {
+  box-sizing: border-box;
+  border-radius: 20px;
+  font-family: var(--docs-material-header-font-family, Roboto, RobotoDraft, Helvetica, Arial, sans-serif);
+  font-weight: var(--docs-material-font-weight-bold, 500);
+  font-size: 14px;
+  height: 40px;
+  letter-spacing: 0.25px;
+  line-height: 16px;
+  background: #f9fbfd;
+  border: 1px solid #747775 !important;
+  color: #444746;
+  padding: 10px 14px;
+  margin-right: 8px;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#slidesync-present-btn:hover {
+  background-color: #e8ebee;
+}
+
+/* ===== PRESENT MODE: Side Drawer ===== */
+.slidesync-drawer-container {
+  font-family: 'Google Sans', sans-serif;
+}
+
+.slidesync-drawer-container * {
+  box-sizing: border-box;
+}
+
+.slidesync-drawer-container *[hidden] {
+  display: none;
+}
+
+/* Mouseover area to reveal the drawer toggle */
+.slidesync-mouseover-area {
+  width: 128px;
+  height: 512px;
+  position: fixed;
+  right: 0;
+  transform: translateY(-50%);
+  top: 50%;
+  z-index: 99998;
+}
+
+.slidesync-drawer-container[active] .slidesync-mouseover-area {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The drawer itself */
+.slidesync-drawer {
+  width: 300px;
+  height: 100%;
+  position: fixed;
+  z-index: 99999;
+  background: #EAEAEA;
+  color: #333;
+  top: 0;
+  right: -300px;
+  transform: translateX(0);
+  transition: 300ms transform ease, 300ms box-shadow ease;
+}
+
+.slidesync-drawer[toggle] {
+  transform: translateX(-300px);
+  box-shadow: 0px 8px 10px -5px rgb(0 0 0 / 20%), 0px 16px 24px 2px rgb(0 0 0 / 14%), 0px 6px 30px 5px rgb(0 0 0 / 12%);
+}
+
+/* Toggle button on the side */
+.slidesync-drawer .slidesync-toggle-btn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+  background: #EAEAEA;
+  display: grid;
+  place-items: center left;
+  border-radius: 50%;
+  cursor: pointer;
+  width: 72px;
+  height: 72px;
+  left: -30px;
+  padding-left: 6px;
+  transition: 300ms opacity ease;
+}
+
+.slidesync-drawer-container:not([active]) .slidesync-drawer:not([toggle]) .slidesync-toggle-btn {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.slidesync-drawer[toggle] .slidesync-toggle-btn svg {
+  transform: rotate(180deg);
+}
+
+/* Drawer content */
+.slidesync-drawer .slidesync-drawer-content {
+  padding: 24px;
+  height: 100%;
+  z-index: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: auto;
+}
+
+.slidesync-drawer .slidesync-logo {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
+}
+
+.slidesync-drawer .slidesync-title {
+  font-weight: 500;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.slidesync-drawer .slidesync-subtitle {
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 24px;
+}
+
+/* Room code */
+.slidesync-drawer .slidesync-code-container {
+  text-align: center;
+  margin-bottom: 16px;
+  font-size: 16px;
+}
+
+.slidesync-drawer .slidesync-code-label {
+  color: #777;
+  margin-bottom: 4px;
+}
+
+.slidesync-drawer .slidesync-code-value {
+  margin-top: 4px;
+  font-size: 32px;
+  color: #33AEFE;
+  font-weight: 600;
+  letter-spacing: 6px;
+}
+
+/* Status */
+.slidesync-drawer .slidesync-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #777;
+  margin-bottom: 20px;
+}
+
+.slidesync-drawer .slidesync-status .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34a853;
+}
+
+.slidesync-drawer .slidesync-status .dot.inactive {
+  background: #666;
+}
+
+/* Buttons */
+.slidesync-drawer button {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: transparent;
+  border-radius: 6px;
+  display: block;
+  margin: auto auto 10px;
+  padding: 12px 16px;
+  color: #333;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  text-align: center;
+  opacity: 0.9;
+  font-family: 'Google Sans', sans-serif;
+}
+
+.slidesync-drawer button:hover {
+  background-color: #e8e8e8;
+  opacity: 1;
+}
+
+.slidesync-drawer button[primary] {
+  background-color: #33AEFE;
+  border-color: #33AEFE;
+  color: #fff;
+  font-weight: 600;
+}
+
+.slidesync-drawer button[primary]:hover {
+  background-color: #0D95EC;
+}
+
+.slidesync-drawer button.danger {
+  border-color: #f44336;
+  background-color: #f44336;
+}
+
+.slidesync-drawer button.danger:hover {
+  background-color: #d32f2f;
+}
+
+/* Divider */
+.slidesync-drawer .slidesync-hr {
+  height: 2px;
+  width: 100%;
+  background: rgba(0,0,0,0.1);
+  margin: 20px 0;
+}
+
+/* QR Code */
+.slidesync-drawer .slidesync-qr-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.slidesync-drawer .slidesync-qr-container img {
+  border-radius: 8px;
+}
+
+.slidesync-drawer .slidesync-url {
+  text-align: center;
+  font-size: 11px;
+  color: #33AEFE;
+  word-break: break-all;
+  margin-bottom: 4px;
+}
+
+/* Footer */
+.slidesync-drawer .slidesync-footer {
+  text-align: center;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.slidesync-drawer .slidesync-credits {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+.slidesync-drawer .slidesync-credits a {
+  color: #33AEFE;
+  text-decoration: none;
+}
+
+.slidesync-drawer .slidesync-credits a:hover {
+  text-decoration: underline;
+}
+
+.slidesync-drawer .slidesync-version {
+  font-size: 10px;
+  color: #999;
+  margin-top: 10px;
+}
+
+.slidesync-drawer .slidesync-sponsor {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.5;
+}
+
+.slidesync-drawer .slidesync-sponsor a {
+  color: #33AEFE;
+  text-decoration: none;
+}
+
+.slidesync-drawer .slidesync-sponsor a:hover {
+  text-decoration: underline;
+}

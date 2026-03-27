@@ -1,0 +1,19 @@
+{
+  "extName": { "message": "slidesync" },
+  "extDescription": { "message": "Compartilhe suas apresentações em tempo real com sua audiência" },
+  "noActiveSession": { "message": "Sem sessao ativa" },
+  "openPresentationHint": { "message": "Abra uma apresentacao no Google Slides para comecar." },
+  "activeSession": { "message": "Sessao ativa" },
+  "roomCodeLabel": { "message": "Codigo da sala" },
+  "currentSlideLabel": { "message": "Slide atual" },
+  "drawerSubtitle": { "message": "Compartilhe seus slides em tempo real" },
+  "statusDisconnected": { "message": "Desconectado" },
+  "statusActive": { "message": "Ativo" },
+  "startSession": { "message": "Iniciar sessao" },
+  "stopSession": { "message": "Encerrar sessao" },
+  "presentButton": { "message": "Apresentar c/ slidesync" },
+  "presentButtonAria": { "message": "Apresentar com slidesync" },
+  "inspiredBy": { "message": "Inspirado por" },
+  "sponsorMessage": { "message": "Manter o slidesync custa cerca de $$10/mês. Se ele tem sido útil nas suas apresentações, qualquer contribuição faz toda a diferença." },
+  "sponsorCta": { "message": "Seja um patrocinador" }
+}

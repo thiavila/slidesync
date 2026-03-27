@@ -1,0 +1,19 @@
+{
+  "extName": { "message": "slidesync" },
+  "extDescription": { "message": "Teilen Sie Ihre Präsentationen in Echtzeit mit Ihrem Publikum" },
+  "noActiveSession": { "message": "Keine aktive Sitzung" },
+  "openPresentationHint": { "message": "Öffnen Sie eine Google Slides-Präsentation, um zu beginnen." },
+  "activeSession": { "message": "Sitzung aktiv" },
+  "roomCodeLabel": { "message": "Raumcode" },
+  "currentSlideLabel": { "message": "Aktuelle Folie" },
+  "drawerSubtitle": { "message": "Teilen Sie Ihre Folien in Echtzeit" },
+  "statusDisconnected": { "message": "Getrennt" },
+  "statusActive": { "message": "Aktiv" },
+  "startSession": { "message": "Sitzung starten" },
+  "stopSession": { "message": "Sitzung beenden" },
+  "presentButton": { "message": "Präsentieren mit slidesync" },
+  "presentButtonAria": { "message": "Präsentieren mit slidesync" },
+  "inspiredBy": { "message": "Inspiriert von" },
+  "sponsorMessage": { "message": "slidesync zu betreiben kostet etwa 10 $$/Monat. Wenn es Ihnen bei Ihren Präsentationen geholfen hat, bedeutet eine kleine Unterstützung sehr viel." },
+  "sponsorCta": { "message": "Unterstützen" }
+}
