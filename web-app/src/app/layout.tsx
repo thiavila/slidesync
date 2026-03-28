@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import { I18nProvider } from "@/lib/i18n/i18n-provider";
 import "./globals.css";
 
@@ -30,11 +29,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <I18nProvider>{children}</I18nProvider>
-        <Script
-          defer
-          src="https://static.cloudflareinsights.com/beacon.min.js"
-          data-cf-beacon='{"token": "84b17dee582144d6b4b40e6b5bbb422a"}'
-        />
       </body>
     </html>
   );
