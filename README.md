@@ -2,6 +2,8 @@
 
 Real-time slide sharing. Present on Google Slides; your audience follows along on their own devices.
 
+**[slidesync.live](https://slidesync.live)** — free to use, no account needed.
+
 ## Overview
 
 slidesync lets a presenter broadcast their Google Slides presentation to every viewer in the room, in real-time. Viewers see slides update instantly on their phones, tablets, or laptops -- no login required. They can annotate slides and export them as PDF for later review.
