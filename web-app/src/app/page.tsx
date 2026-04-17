@@ -28,7 +28,9 @@ export default function Home() {
               {t("home.joinButton")}
             </Link>
             <a
-              href="#"
+              href="https://chromewebstore.google.com/detail/slidesync/onekdjipbccldnkdpnnjeobeeajbkkad"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-8 py-4 text-lg font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
             >
               <svg
