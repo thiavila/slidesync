@@ -5,6 +5,7 @@
   "home.sponsorMessage": "slidesync को चलाने में हर महीने लगभग $10 का खर्च आता है। अगर यह आपकी प्रेजेंटेशन में मददगार रहा है, तो एक छोटा सा सहयोग बहुत मायने रखता है।",
   "home.sponsorCta": "स्पॉन्सर बनें",
   "home.installExtension": "एक्सटेंशन इंस्टॉल करें",
+  "home.presentReveal": "Reveal प्रेजेंट करें",
   "home.howItWorks": "कैसे काम करता है",
   "home.step1Title": "एक्सटेंशन इंस्टॉल करें",
   "home.step1Desc": "प्रेजेंटर कुछ ही क्लिक में Chrome पर slidesync एक्सटेंशन इंस्टॉल करते हैं।",
@@ -70,5 +71,16 @@
   "privacy.openSource.title": "ओपन सोर्स",
   "privacy.openSource.body": "slidesync पूरी तरह से ओपन सोर्स है। आप हमारे GitHub रिपॉजिटरी github.com/thiavila/slide-sync पर सभी कोड देख सकते हैं।",
   "privacy.contact.title": "संपर्क",
-  "privacy.contact.body": "इस गोपनीयता नीति के बारे में प्रश्नों या चिंताओं के लिए, कृपया हमारे GitHub रिपॉजिटरी पर एक issue खोलें।"
+  "privacy.contact.body": "इस गोपनीयता नीति के बारे में प्रश्नों या चिंताओं के लिए, कृपया हमारे GitHub रिपॉजिटरी पर एक issue खोलें।",
+  "present.title": "Reveal.js प्रेजेंट करें",
+  "present.subtitle": "अपना Reveal HTML अपलोड करें और एक लाइव रूम शुरू करें।",
+  "present.chooseFile": "HTML फ़ाइल चुनें",
+  "present.loading": "लोड हो रहा है...",
+  "present.captureNote": "slidesync एक्सटेंशन ड्रॉअर खोलें (दाईं ओर माउसओवर) और प्रसारण शुरू करने के लिए Start पर क्लिक करें।",
+  "present.errorNotHtml": "फ़ाइल .html होनी चाहिए",
+  "present.checkingExtension": "slidesync एक्सटेंशन की जाँच हो रही है...",
+  "present.extensionRequired": "एक्सटेंशन आवश्यक है",
+  "present.extensionRequiredBody": "Reveal मोड slidesync Chrome एक्सटेंशन का उपयोग नेटिव क्वालिटी में स्लाइड कैप्चर करने के लिए करता है। प्रेजेंट करना शुरू करने के लिए इसे इंस्टॉल करें।",
+  "present.installExtension": "एक्सटेंशन इंस्टॉल करें",
+  "present.alreadyInstalled": "पहले से इंस्टॉल है? रीलोड करें।"
 }

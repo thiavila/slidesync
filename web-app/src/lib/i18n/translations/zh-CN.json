@@ -5,6 +5,7 @@
   "home.sponsorMessage": "运营 slidesync 每月大约需要10美元。如果它对您的演示有帮助，一点小小的贡献对我意义重大。",
   "home.sponsorCta": "成为赞助者",
   "home.installExtension": "安装扩展",
+  "home.presentReveal": "演示 Reveal",
   "home.howItWorks": "使用方法",
   "home.step1Title": "安装扩展",
   "home.step1Desc": "演示者只需几次点击即可安装slidesync Chrome扩展。",
@@ -70,5 +71,16 @@
   "privacy.openSource.title": "开源",
   "privacy.openSource.body": "slidesync完全开源。您可以在我们的GitHub仓库 github.com/thiavila/slide-sync 查看所有代码。",
   "privacy.contact.title": "联系方式",
-  "privacy.contact.body": "如对本隐私政策有任何疑问或顾虑，请在我们的GitHub仓库中创建issue。"
+  "privacy.contact.body": "如对本隐私政策有任何疑问或顾虑，请在我们的GitHub仓库中创建issue。",
+  "present.title": "演示 Reveal.js",
+  "present.subtitle": "上传你的 Reveal HTML 文件，开启实时房间。",
+  "present.chooseFile": "选择 HTML 文件",
+  "present.loading": "加载中...",
+  "present.captureNote": "打开 slidesync 扩展抽屉(鼠标移到右边缘),然后点击开始进行广播。",
+  "present.errorNotHtml": "文件必须是 .html",
+  "present.checkingExtension": "正在检查 slidesync 扩展...",
+  "present.extensionRequired": "需要扩展",
+  "present.extensionRequiredBody": "Reveal 模式使用 slidesync Chrome 扩展以原生质量捕获幻灯片。请先安装以开始演示。",
+  "present.installExtension": "安装扩展",
+  "present.alreadyInstalled": "已经安装? 重新加载。"
 }

@@ -17,11 +17,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "capture-slide") {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    if (!ws) {
+      console.warn("[slidesync] capture-slide skipped: no WebSocket (start session first)");
+      return;
+    }
+    if (ws.readyState !== WebSocket.OPEN) {
+      console.warn(
+        "[slidesync] capture-slide skipped: WebSocket not open, state=",
+        ws.readyState,
+      );
+      return;
+    }
 
     // Only capture if the presentation tab is the active tab in its window
     chrome.tabs.get(sender.tab.id, (tab) => {
-      if (chrome.runtime.lastError || !tab.active) return;
+      if (chrome.runtime.lastError) {
+        console.warn(
+          "[slidesync] capture-slide skipped: tabs.get error",
+          chrome.runtime.lastError.message,
+        );
+        return;
+      }
+      if (!tab.active) {
+        console.warn(
+          "[slidesync] capture-slide skipped: presenter tab is not active (focus it to capture)",
+        );
+        return;
+      }
 
       chrome.tabs.captureVisibleTab(
         sender.tab.windowId,
@@ -40,7 +62,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 imageData: imageData,
               })
             );
-            console.log("[slidesync] Sent slide", message.slideNumber);
+            console.log("[slidesync] Sent slide", message.slideNumber, `(${(imageData.length / 1024).toFixed(0)} KB)`);
             chrome.storage.local.set({ currentSlide: message.slideNumber });
           }
         }

@@ -20,13 +20,35 @@ export default function Home() {
             {t("home.subtitle")}
           </p>
 
-          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center sm:flex-wrap">
             <Link
               href="/join"
               className="inline-flex items-center justify-center rounded-lg bg-brand px-8 py-4 text-lg font-medium text-white shadow-sm hover:bg-brand-dark transition focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
             >
               {t("home.joinButton")}
             </Link>
+            {/* Hard navigation (not Next Link) so the extension's content
+                script — which only injects on full page loads matching
+                /present/* — runs and announces itself before detection. */}
+            <a
+              href="/present/"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-8 py-4 text-lg font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
+            >
+              <svg
+                className="mr-2 h-5 w-5 text-gray-500"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="2" y="3" width="20" height="14" rx="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+              {t("home.presentReveal")}
+            </a>
             <a
               href="https://chromewebstore.google.com/detail/slidesync/onekdjipbccldnkdpnnjeobeeajbkkad"
               target="_blank"

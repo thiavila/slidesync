@@ -5,6 +5,7 @@
   "home.sponsorMessage": "slidesync の運営には月約10ドルかかります。プレゼンテーションで役立っていたら、少しのご支援がとても励みになります。",
   "home.sponsorCta": "スポンサーになる",
   "home.installExtension": "拡張機能をインストール",
+  "home.presentReveal": "Reveal を発表",
   "home.howItWorks": "使い方",
   "home.step1Title": "拡張機能をインストール",
   "home.step1Desc": "発表者がslidesyncのChrome拡張機能を数クリックでインストールします。",
@@ -70,5 +71,16 @@
   "privacy.openSource.title": "オープンソース",
   "privacy.openSource.body": "slidesyncは完全にオープンソースです。すべてのコードはGitHubリポジトリ github.com/thiavila/slide-sync でご確認いただけます。",
   "privacy.contact.title": "お問い合わせ",
-  "privacy.contact.body": "このプライバシーポリシーに関するご質問やご懸念がありましたら、GitHubリポジトリでissueを作成してください。"
+  "privacy.contact.body": "このプライバシーポリシーに関するご質問やご懸念がありましたら、GitHubリポジトリでissueを作成してください。",
+  "present.title": "Reveal.js を発表",
+  "present.subtitle": "Reveal の HTML をアップロードして、ライブルームを開始します。",
+  "present.chooseFile": "HTML ファイルを選択",
+  "present.loading": "読み込み中...",
+  "present.captureNote": "slidesync 拡張機能のドロワーを開き(右端にマウスオーバー)、開始をクリックして配信します。",
+  "present.errorNotHtml": "ファイルは .html である必要があります",
+  "present.checkingExtension": "slidesync 拡張機能を確認しています...",
+  "present.extensionRequired": "拡張機能が必要です",
+  "present.extensionRequiredBody": "Reveal モードでは slidesync Chrome 拡張機能を使ってネイティブ品質でスライドをキャプチャします。インストールしてプレゼンを開始してください。",
+  "present.installExtension": "拡張機能をインストール",
+  "present.alreadyInstalled": "インストール済みですか? 再読み込み。"
 }

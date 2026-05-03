@@ -5,6 +5,7 @@
   "home.sponsorMessage": "slidesync zu betreiben kostet etwa 10 $/Monat. Wenn es Ihnen bei Ihren Präsentationen geholfen hat, bedeutet eine kleine Unterstützung sehr viel.",
   "home.sponsorCta": "Unterstützen",
   "home.installExtension": "Erweiterung installieren",
+  "home.presentReveal": "Reveal präsentieren",
   "home.howItWorks": "So funktioniert's",
   "home.step1Title": "Erweiterung installieren",
   "home.step1Desc": "Der Präsentator installiert die slidesync Chrome-Erweiterung mit wenigen Klicks.",
@@ -70,5 +71,16 @@
   "privacy.openSource.title": "Open Source",
   "privacy.openSource.body": "slidesync ist vollständig Open Source. Sie können den gesamten Code in unserem GitHub-Repository unter github.com/thiavila/slide-sync einsehen.",
   "privacy.contact.title": "Kontakt",
-  "privacy.contact.body": "Bei Fragen oder Bedenken zu dieser Datenschutzrichtlinie eröffnen Sie bitte ein Issue in unserem GitHub-Repository."
+  "privacy.contact.body": "Bei Fragen oder Bedenken zu dieser Datenschutzrichtlinie eröffnen Sie bitte ein Issue in unserem GitHub-Repository.",
+  "present.title": "Reveal.js präsentieren",
+  "present.subtitle": "Laden Sie Ihre Reveal-HTML-Datei hoch und starten Sie einen Live-Raum.",
+  "present.chooseFile": "HTML-Datei auswählen",
+  "present.loading": "Lade...",
+  "present.captureNote": "Öffnen Sie das slidesync-Erweiterungsfenster (Mouseover am rechten Rand) und klicken Sie auf Starten zum Übertragen.",
+  "present.errorNotHtml": "Datei muss .html sein",
+  "present.checkingExtension": "Suche nach der slidesync-Erweiterung...",
+  "present.extensionRequired": "Erweiterung erforderlich",
+  "present.extensionRequiredBody": "Der Reveal-Modus verwendet die slidesync Chrome-Erweiterung, um Folien in nativer Qualität aufzunehmen. Installieren Sie sie, um zu beginnen.",
+  "present.installExtension": "Erweiterung installieren",
+  "present.alreadyInstalled": "Bereits installiert? Neu laden."
 }

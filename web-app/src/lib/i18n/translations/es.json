@@ -5,6 +5,7 @@
   "home.sponsorMessage": "Mantener slidesync cuesta unos $10/mes. Si te ha sido útil en tus presentaciones, una pequeña contribución significa muchísimo.",
   "home.sponsorCta": "Patrocinar",
   "home.installExtension": "Instalar extensión",
+  "home.presentReveal": "Presentar Reveal",
   "home.howItWorks": "Cómo funciona",
   "home.step1Title": "Instala la extensión",
   "home.step1Desc": "El presentador instala la extensión slidesync en Chrome en pocos clics.",
@@ -70,5 +71,16 @@
   "privacy.openSource.title": "Código Abierto",
   "privacy.openSource.body": "slidesync es totalmente de código abierto. Puedes revisar todo el código en nuestro repositorio de GitHub en github.com/thiavila/slide-sync.",
   "privacy.contact.title": "Contacto",
-  "privacy.contact.body": "Para preguntas o inquietudes sobre esta política de privacidad, abre un issue en nuestro repositorio de GitHub."
+  "privacy.contact.body": "Para preguntas o inquietudes sobre esta política de privacidad, abre un issue en nuestro repositorio de GitHub.",
+  "present.title": "Presentar Reveal.js",
+  "present.subtitle": "Sube tu HTML de Reveal e inicia una sala en vivo.",
+  "present.chooseFile": "Elegir archivo HTML",
+  "present.loading": "Cargando...",
+  "present.captureNote": "Abre el panel lateral de la extensión slidesync (mouseover en el borde derecho) y haz clic en Iniciar para transmitir.",
+  "present.errorNotHtml": "El archivo debe ser .html",
+  "present.checkingExtension": "Verificando la extensión slidesync...",
+  "present.extensionRequired": "Extensión necesaria",
+  "present.extensionRequiredBody": "El modo Reveal usa la extensión slidesync de Chrome para capturar las diapositivas en calidad nativa. Instálala para empezar a presentar.",
+  "present.installExtension": "Instalar extensión",
+  "present.alreadyInstalled": "¿Ya está instalada? Recargar."
 }

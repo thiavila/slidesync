@@ -5,9 +5,8 @@ import usePartySocket from "partysocket/react";
 import SlideViewer from "@/components/slide-viewer";
 import DownloadButton from "@/components/download-button";
 import { useTranslations } from "@/lib/i18n/use-translations";
-
-const PARTY_HOST =
-  process.env.NEXT_PUBLIC_PARTYKIT_HOST || "localhost:1999";
+import { PARTY_HOST } from "@/lib/config";
+import { readRoomCodeFromPath } from "@/lib/room-code";
 
 export default function StudentSessionPage() {
   const { t } = useTranslations();
@@ -18,7 +17,7 @@ export default function StudentSessionPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const code = window.location.pathname.split("/session/")[1]?.replace(/\/$/, "");
+    const code = readRoomCodeFromPath("/session/");
     if (!code) {
       window.location.href = "/join";
       return;

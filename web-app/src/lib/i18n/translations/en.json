@@ -5,6 +5,7 @@
   "home.sponsorMessage": "Running slidesync costs about $10/month. If it's been helpful in your presentations, a small contribution means the world.",
   "home.sponsorCta": "Become a sponsor",
   "home.installExtension": "Install Extension",
+  "home.presentReveal": "Present Reveal",
   "home.howItWorks": "How It Works",
   "home.step1Title": "Install the Extension",
   "home.step1Desc": "The presenter installs the slidesync Chrome extension in just a few clicks.",
@@ -70,5 +71,16 @@
   "privacy.openSource.title": "Open Source",
   "privacy.openSource.body": "slidesync is fully open source. You can review all code on our GitHub repository at github.com/thiavila/slide-sync.",
   "privacy.contact.title": "Contact",
-  "privacy.contact.body": "For questions or concerns about this privacy policy, please open an issue on our GitHub repository."
+  "privacy.contact.body": "For questions or concerns about this privacy policy, please open an issue on our GitHub repository.",
+  "present.title": "Present Reveal.js",
+  "present.subtitle": "Upload your Reveal HTML and start a live room.",
+  "present.chooseFile": "Choose HTML file",
+  "present.loading": "Loading...",
+  "present.captureNote": "Open the slidesync extension drawer (mouseover the right edge) and click Start to broadcast.",
+  "present.errorNotHtml": "File must be .html",
+  "present.checkingExtension": "Checking for the slidesync extension...",
+  "present.extensionRequired": "Extension required",
+  "present.extensionRequiredBody": "Reveal mode uses the slidesync Chrome extension to capture slides at native quality. Install it to start presenting.",
+  "present.installExtension": "Install extension",
+  "present.alreadyInstalled": "Already installed? Reload."
 }
