@@ -63,8 +63,8 @@ export async function exportAsPdf(input: ExportInput): Promise<void> {
   const { default: jsPDF } = await import("jspdf");
   const composited = await getCompositedSlides(input, {
     format: "jpeg",
-    quality: 0.85,
-    maxDim: 1600,
+    quality: 0.95,
+    maxDim: 2560,
   });
 
   if (composited.length === 0) return;
