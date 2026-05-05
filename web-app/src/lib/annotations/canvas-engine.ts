@@ -109,24 +109,54 @@ export function renderAnnotations(
   }
 }
 
+export interface CompositeOptions {
+  format?: "png" | "jpeg";
+  quality?: number;
+  maxDim?: number;
+}
+
+export interface CompositedSlide {
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
 /** Composite slide image + annotations into a single canvas, returns data URL */
 export async function compositeSlide(
   imageData: string,
-  annotation: SlideAnnotation | undefined
-): Promise<string> {
+  annotation: SlideAnnotation | undefined,
+  options: CompositeOptions = {}
+): Promise<CompositedSlide> {
+  const { format = "png", quality = 0.92, maxDim } = options;
   const img = await loadImage(imageData);
-  const canvas = document.createElement("canvas");
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-  const ctx = canvas.getContext("2d")!;
 
-  ctx.drawImage(img, 0, 0);
-
-  if (annotation && (annotation.strokes.length > 0 || annotation.textNotes.length > 0)) {
-    renderAnnotations(ctx, annotation, canvas.width, canvas.height);
+  let width = img.naturalWidth;
+  let height = img.naturalHeight;
+  if (maxDim && Math.max(width, height) > maxDim) {
+    const scale = maxDim / Math.max(width, height);
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
   }
 
-  return canvas.toDataURL("image/png");
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d")!;
+
+  if (format === "jpeg") {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  ctx.drawImage(img, 0, 0, width, height);
+
+  if (annotation && (annotation.strokes.length > 0 || annotation.textNotes.length > 0)) {
+    renderAnnotations(ctx, annotation, width, height);
+  }
+
+  const mime = format === "jpeg" ? "image/jpeg" : "image/png";
+  const dataUrl = format === "jpeg" ? canvas.toDataURL(mime, quality) : canvas.toDataURL(mime);
+  return { dataUrl, width, height };
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {

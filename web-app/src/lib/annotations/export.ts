@@ -1,5 +1,5 @@
 import type { SlideAnnotation } from "./types";
-import { compositeSlide } from "./canvas-engine";
+import { compositeSlide, type CompositeOptions } from "./canvas-engine";
 import { getAnnotation, getAllSlideNumbers } from "./storage";
 
 interface ExportInput {
@@ -9,21 +9,29 @@ interface ExportInput {
   onProgress?: (current: number, total: number) => void;
 }
 
+interface CompositedResult {
+  slideNumber: number;
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
 async function getCompositedSlides(
-  input: ExportInput
-): Promise<{ slideNumber: number; dataUrl: string }[]> {
+  input: ExportInput,
+  options: CompositeOptions = {}
+): Promise<CompositedResult[]> {
   const visibleSlides = Array.from(input.slides.entries())
     .filter(([num]) => num <= input.currentSlide)
     .sort(([a], [b]) => a - b);
 
   const total = visibleSlides.length;
-  const results: { slideNumber: number; dataUrl: string }[] = [];
+  const results: CompositedResult[] = [];
 
   for (let i = 0; i < visibleSlides.length; i++) {
     const [slideNumber, imageData] = visibleSlides[i];
     const annotation = await getAnnotation(input.roomCode, slideNumber);
-    const dataUrl = await compositeSlide(imageData, annotation);
-    results.push({ slideNumber, dataUrl });
+    const { dataUrl, width, height } = await compositeSlide(imageData, annotation, options);
+    results.push({ slideNumber, dataUrl, width, height });
     input.onProgress?.(i + 1, total);
   }
 
@@ -53,25 +61,28 @@ function downloadBlob(blob: Blob, filename: string) {
 
 export async function exportAsPdf(input: ExportInput): Promise<void> {
   const { default: jsPDF } = await import("jspdf");
-  const composited = await getCompositedSlides(input);
+  const composited = await getCompositedSlides(input, {
+    format: "jpeg",
+    quality: 0.85,
+    maxDim: 1600,
+  });
 
   if (composited.length === 0) return;
 
-  // Use first slide to determine aspect ratio
-  const firstImg = await loadImageDimensions(composited[0].dataUrl);
+  const first = composited[0];
   const pdf = new jsPDF({
-    orientation: firstImg.width > firstImg.height ? "landscape" : "portrait",
+    orientation: first.width > first.height ? "landscape" : "portrait",
     unit: "px",
-    format: [firstImg.width, firstImg.height],
+    format: [first.width, first.height],
+    compress: true,
   });
 
   for (let i = 0; i < composited.length; i++) {
+    const { dataUrl, width, height } = composited[i];
     if (i > 0) {
-      const dims = await loadImageDimensions(composited[i].dataUrl);
-      pdf.addPage([dims.width, dims.height], dims.width > dims.height ? "landscape" : "portrait");
+      pdf.addPage([width, height], width > height ? "landscape" : "portrait");
     }
-    const dims = await loadImageDimensions(composited[i].dataUrl);
-    pdf.addImage(composited[i].dataUrl, "PNG", 0, 0, dims.width, dims.height);
+    pdf.addImage(dataUrl, "JPEG", 0, 0, width, height, undefined, "FAST");
   }
 
   pdf.save(`slides-${input.roomCode}.pdf`);
@@ -92,16 +103,4 @@ export async function exportAsZip(input: ExportInput): Promise<void> {
   const zipped = zipSync(files, { level: 6 });
   const blob = new Blob([new Uint8Array(zipped)], { type: "application/zip" });
   downloadBlob(blob, `slides-${input.roomCode}.zip`);
-}
-
-function loadImageDimensions(
-  src: string
-): Promise<{ width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () =>
-      resolve({ width: img.naturalWidth, height: img.naturalHeight });
-    img.onerror = reject;
-    img.src = src;
-  });
 }
