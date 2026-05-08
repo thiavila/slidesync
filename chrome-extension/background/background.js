@@ -9,54 +9,40 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "start-session") {
     connectWebSocket(message.wsUrl, message.roomCode);
     sendResponse({ ok: true });
-    return; // sync response
+    return;
   }
 
   if (message.type === "stop-session") {
     disconnectWebSocket();
     sendResponse({ ok: true });
-    return; // sync response
+    return;
   }
 
   if (message.type === "capture-slide") {
-    // Always respond when done so the content script can re-show the QR
-    // overlay it hid right before requesting the capture.
-    let responded = false;
-    const respond = () => {
-      if (responded) return;
-      responded = true;
-      try { sendResponse({ ok: true }); } catch (_) { /* channel closed */ }
-    };
-
     if (!ws) {
       console.warn("[slidesync] capture-slide skipped: no WebSocket (start session first)");
-      respond();
-      return; // no async work pending
+      return;
     }
     if (ws.readyState !== WebSocket.OPEN) {
       console.warn(
         "[slidesync] capture-slide skipped: WebSocket not open, state=",
         ws.readyState,
       );
-      respond();
       return;
     }
 
-    // Only capture if the presentation tab is the active tab in its window
     chrome.tabs.get(sender.tab.id, (tab) => {
       if (chrome.runtime.lastError) {
         console.warn(
           "[slidesync] capture-slide skipped: tabs.get error",
           chrome.runtime.lastError.message,
         );
-        respond();
         return;
       }
       if (!tab.active) {
         console.warn(
           "[slidesync] capture-slide skipped: presenter tab is not active (focus it to capture)",
         );
-        respond();
         return;
       }
 
@@ -64,42 +50,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sender.tab.windowId,
         { format: "jpeg", quality: 70 },
         (imageData) => {
-          try {
-            if (chrome.runtime.lastError) {
-              console.warn("[slidesync] Capture error:", chrome.runtime.lastError.message);
-              return;
-            }
+          if (chrome.runtime.lastError) {
+            console.warn("[slidesync] Capture error:", chrome.runtime.lastError.message);
+            return;
+          }
 
-            if (ws && ws.readyState === WebSocket.OPEN) {
-              ws.send(
-                JSON.stringify({
-                  type: "slide-update",
-                  slideNumber: message.slideNumber,
-                  imageData: imageData,
-                })
-              );
-              console.log("[slidesync] Sent slide", message.slideNumber, `(${(imageData.length / 1024).toFixed(0)} KB)`);
-              chrome.storage.local.set({ currentSlide: message.slideNumber });
-            }
-          } finally {
-            // Respond after the capture (and ws send attempt) completes so
-            // the content script restores the overlay only once the snapshot
-            // is in flight, never before.
-            respond();
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(
+              JSON.stringify({
+                type: "slide-update",
+                slideNumber: message.slideNumber,
+                imageData: imageData,
+              })
+            );
+            console.log("[slidesync] Sent slide", message.slideNumber, `(${(imageData.length / 1024).toFixed(0)} KB)`);
+            chrome.storage.local.set({ currentSlide: message.slideNumber });
           }
         }
       );
     });
 
-    return true; // keep the response channel open for the async path
+    return; // no async response needed — the QR overlay is gone, no callback to coordinate
   }
-
-  return; // unhandled
 });
 
 function connectWebSocket(wsUrl, roomCode) {
   if (ws) {
-    ws.onclose = null; // prevent reconnect from old socket
+    ws.onclose = null;
     ws.close();
     ws = null;
   }
@@ -133,7 +110,7 @@ function disconnectWebSocket() {
   currentWsUrl = null;
   reconnectAttempts = 0;
   if (ws) {
-    ws.onclose = null; // prevent auto-reconnect on intentional disconnect
+    ws.onclose = null;
     ws.close();
     ws = null;
   }
