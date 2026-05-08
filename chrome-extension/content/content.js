@@ -24,8 +24,8 @@
     let lastSlide = null;
     let hideTimeout = null;
     let qrColor = "off";
+    let qrPosition = "bottom-right";
     let activeRoomCode = null;
-    let pipWindow = null;
 
     function getSlideNumber() {
       const counter = document.querySelector(".goog-flat-menu-button-caption") ||
@@ -34,7 +34,6 @@
         const pos = counter.getAttribute("aria-posinset");
         if (pos) return parseInt(pos, 10);
       }
-
       const hash = window.location.hash;
       const pMatch = hash.match(/slide=id\.p(\d+)/);
       if (pMatch) {
@@ -42,15 +41,42 @@
         return num === 0 ? 1 : num;
       }
       if (/slide=id\.p$/.test(hash)) return 1;
-
       return lastSlide || 1;
     }
 
+    // Compute the QR overlay's position as fractions of the viewport so the
+    // background script can map it onto the captured image (which has its
+    // own DPR-scaled dimensions) without us having to send any pixel math.
+    function getQRRect() {
+      if (qrColor === "off" || !activeRoomCode) return null;
+      const overlay = document.getElementById("slidesync-qr-overlay");
+      if (!overlay) return null;
+      const r = overlay.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) return null;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      if (vw === 0 || vh === 0) return null;
+      // Inflate slightly (2 CSS pixels each side) to make sure we cover the
+      // QR fully even with subpixel rounding in the captured image. The
+      // patch is "stretch nearby slide pixels," so a couple extra pixels is
+      // invisible but margins of error are not.
+      const pad = 2;
+      return {
+        x: Math.max(0, (r.left - pad)) / vw,
+        y: Math.max(0, (r.top - pad)) / vh,
+        width: Math.min(vw, r.width + pad * 2) / vw,
+        height: Math.min(vh, r.height + pad * 2) / vh,
+        position: qrPosition,
+      };
+    }
+
     function requestCapture(slideNumber) {
-      // No more hide-during-capture: the QR lives in a Document PiP window,
-      // which is OS-level and not part of the captured tab.
       chrome.runtime.sendMessage(
-        { type: "capture-slide", slideNumber },
+        {
+          type: "capture-slide",
+          slideNumber,
+          qrRect: getQRRect(),
+        },
         () => { void chrome.runtime.lastError; },
       );
     }
@@ -74,120 +100,6 @@
       checkSlideTimer = setTimeout(checkSlide, 400);
     }
 
-    // ----- Document Picture-in-Picture for the QR -----
-    // chrome.tabs.captureVisibleTab captures the tab's viewport. A PiP window
-    // is a separate OS-level window, so it never appears in the screenshot.
-    // Trade-off: requires a user gesture to open (clicking the color toggle
-    // is one), and replaces the in-slide overlay with a draggable mini window.
-
-    const pipSupported = "documentPictureInPicture" in window;
-
-    function generateQRDataUrl(text, color) {
-      const tmp = document.createElement("div");
-      new QRCode(tmp, {
-        text,
-        width: 220,
-        height: 220,
-        colorDark: color === "white" ? "#ffffff" : "#000000",
-        colorLight: "rgba(0,0,0,0)",
-        correctLevel: QRCode.CorrectLevel.M,
-      });
-      const canvas = tmp.querySelector("canvas");
-      if (canvas) return canvas.toDataURL("image/png");
-      const img = tmp.querySelector("img");
-      return img ? img.src : null;
-    }
-
-    async function openOrUpdatePiP() {
-      if (!pipSupported) {
-        console.warn("[slidesync] Document PiP not supported in this browser");
-        return;
-      }
-      if (!activeRoomCode || qrColor === "off") return;
-
-      if (!pipWindow) {
-        try {
-          pipWindow = await window.documentPictureInPicture.requestWindow({
-            width: 260,
-            height: 320,
-          });
-        } catch (e) {
-          console.warn("[slidesync] PiP open failed:", e);
-          return;
-        }
-
-        pipWindow.document.title = "slidesync";
-        const style = pipWindow.document.createElement("style");
-        style.textContent = `
-          html, body { margin: 0; padding: 0; height: 100%; }
-          body {
-            font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            padding: 16px;
-            box-sizing: border-box;
-            background: #ffffff;
-            color: #333333;
-          }
-          body[data-color="white"] { background: #000000; color: #cccccc; }
-          .slidesync-pip-qr {
-            width: min(220px, calc(100vw - 32px));
-            aspect-ratio: 1 / 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          .slidesync-pip-qr img {
-            width: 100%;
-            height: 100%;
-            display: block;
-            background: transparent;
-            image-rendering: pixelated;
-          }
-          .slidesync-pip-url {
-            font-size: 11px;
-            letter-spacing: 0.3px;
-            word-break: break-all;
-            text-align: center;
-            line-height: 1.3;
-            opacity: 0.75;
-          }
-        `;
-        pipWindow.document.head.appendChild(style);
-        pipWindow.document.body.innerHTML = `
-          <div class="slidesync-pip-qr"><img id="pip-qr" alt="QR" /></div>
-          <div class="slidesync-pip-url" id="pip-url"></div>
-        `;
-
-        // User closed the PiP via the OS X button → keep state in sync
-        pipWindow.addEventListener("pagehide", () => {
-          pipWindow = null;
-          if (qrColor !== "off") {
-            chrome.storage.local.set({ qrColor: "off" });
-          }
-        });
-      }
-
-      // Update content (also fires when color changes between black/white)
-      const sessionUrl = `${WEBAPP_URL}/session/${activeRoomCode}`;
-      pipWindow.document.body.setAttribute("data-color", qrColor);
-      const dataUrl = generateQRDataUrl(sessionUrl, qrColor);
-      const imgEl = pipWindow.document.getElementById("pip-qr");
-      const urlEl = pipWindow.document.getElementById("pip-url");
-      if (imgEl && dataUrl) imgEl.src = dataUrl;
-      if (urlEl) urlEl.textContent = sessionUrl;
-    }
-
-    function closePiP() {
-      if (!pipWindow) return;
-      try { pipWindow.close(); } catch (_) { /* ignore */ }
-      pipWindow = null;
-    }
-
-    // Inject the side drawer
     function injectDrawer() {
       const container = document.createElement("div");
       container.className = "slidesync-drawer-container";
@@ -234,6 +146,23 @@
                       <button type="button" class="slidesync-seg" data-value="white">${msg("qrColorWhite")}</button>
                     </div>
                   </div>
+                  <div class="slidesync-setting-row">
+                    <div class="slidesync-setting-label">${msg("qrPositionLabel")}</div>
+                    <div class="slidesync-segmented positions" id="slidesync-qr-position-group">
+                      <button type="button" class="slidesync-seg" data-value="top-left" title="${msg("qrPositionTopLeft")}" aria-label="${msg("qrPositionTopLeft")}">
+                        <span class="slidesync-pos-icon"><span class="slidesync-dot-tl"></span></span>
+                      </button>
+                      <button type="button" class="slidesync-seg" data-value="top-right" title="${msg("qrPositionTopRight")}" aria-label="${msg("qrPositionTopRight")}">
+                        <span class="slidesync-pos-icon"><span class="slidesync-dot-tr"></span></span>
+                      </button>
+                      <button type="button" class="slidesync-seg" data-value="bottom-left" title="${msg("qrPositionBottomLeft")}" aria-label="${msg("qrPositionBottomLeft")}">
+                        <span class="slidesync-pos-icon"><span class="slidesync-dot-bl"></span></span>
+                      </button>
+                      <button type="button" class="slidesync-seg" data-value="bottom-right" title="${msg("qrPositionBottomRight")}" aria-label="${msg("qrPositionBottomRight")}">
+                        <span class="slidesync-pos-icon"><span class="slidesync-dot-br"></span></span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -247,7 +176,7 @@
                 ${msg("inspiredBy")} <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
                 by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
               </div>
-              <div class="slidesync-version">slidesync v2.4</div>
+              <div class="slidesync-version">slidesync v2.5</div>
             </div>
           </div>
         </div>
@@ -269,7 +198,6 @@
       container.querySelector(".slidesync-toggle-btn").addEventListener("click", () => {
         const drawer = container.querySelector(".slidesync-drawer");
         drawer.toggleAttribute("toggle");
-
         if (drawer.getAttribute("toggle") === null) {
           clearTimeout(hideTimeout);
           container.setAttribute("active", "");
@@ -282,7 +210,6 @@
       document.getElementById("slidesync-start").addEventListener("click", startSession);
       document.getElementById("slidesync-stop").addEventListener("click", stopSession);
 
-      // Collapsible settings header
       const settings = document.getElementById("slidesync-settings");
       const settingsToggle = document.getElementById("slidesync-settings-toggle");
       settingsToggle.addEventListener("click", () => {
@@ -291,21 +218,14 @@
         settingsToggle.setAttribute("aria-expanded", expanded ? "false" : "true");
       });
 
-      // QR color toggle. The click event itself is the user gesture that
-      // documentPictureInPicture.requestWindow() requires.
       document.querySelectorAll("#slidesync-qr-color-group .slidesync-seg").forEach((b) => {
         b.addEventListener("click", () => {
-          const value = b.dataset.value;
-          chrome.storage.local.set({ qrColor: value });
-          // Local-tab onChanged listeners are async, so update local var
-          // synchronously to keep the click-bound user gesture for PiP.
-          qrColor = value;
-          syncDrawerSettings();
-          if (value === "off") {
-            closePiP();
-          } else {
-            openOrUpdatePiP();
-          }
+          chrome.storage.local.set({ qrColor: b.dataset.value });
+        });
+      });
+      document.querySelectorAll("#slidesync-qr-position-group .slidesync-seg").forEach((b) => {
+        b.addEventListener("click", () => {
+          chrome.storage.local.set({ qrPosition: b.dataset.value });
         });
       });
 
@@ -315,6 +235,16 @@
       }, 4000);
     }
 
+    function injectQROverlay() {
+      const overlay = document.createElement("div");
+      overlay.className = "slidesync-qr-overlay";
+      overlay.id = "slidesync-qr-overlay";
+      overlay.setAttribute("data-color", "off");
+      overlay.setAttribute("data-position", "bottom-right");
+      overlay.innerHTML = `<div class="slidesync-qr-canvas" id="slidesync-qr-canvas"></div>`;
+      document.body.appendChild(overlay);
+    }
+
     function generateRoomCode() {
       return Math.floor(100000 + Math.random() * 900000).toString();
     }
@@ -322,6 +252,38 @@
     function syncDrawerSettings() {
       document.querySelectorAll("#slidesync-qr-color-group .slidesync-seg").forEach((b) => {
         b.classList.toggle("active", b.dataset.value === qrColor);
+      });
+      document.querySelectorAll("#slidesync-qr-position-group .slidesync-seg").forEach((b) => {
+        b.classList.toggle("active", b.dataset.value === qrPosition);
+      });
+    }
+
+    function renderOverlayQR() {
+      const overlay = document.getElementById("slidesync-qr-overlay");
+      if (!overlay) return;
+      overlay.setAttribute("data-position", qrPosition);
+
+      const canvas = document.getElementById("slidesync-qr-canvas");
+      if (!canvas) return;
+
+      if (!activeRoomCode || qrColor === "off") {
+        overlay.setAttribute("data-color", "off");
+        canvas.innerHTML = "";
+        return;
+      }
+      overlay.setAttribute("data-color", qrColor);
+
+      const sessionUrl = `${WEBAPP_URL}/session/${activeRoomCode}`;
+      const colorDark = qrColor === "white" ? "#ffffff" : "#000000";
+
+      canvas.innerHTML = "";
+      new QRCode(canvas, {
+        text: sessionUrl,
+        width: 115,
+        height: 115,
+        colorDark,
+        colorLight: "rgba(0,0,0,0)",
+        correctLevel: QRCode.CorrectLevel.M,
       });
     }
 
@@ -348,11 +310,7 @@
       document.getElementById("slidesync-stop").style.display = "block";
 
       activeRoomCode = roomCode;
-      // Click on the start button counts as user gesture, so if a previous
-      // session left qrColor != off we can re-open PiP automatically.
-      if (qrColor !== "off") {
-        openOrUpdatePiP();
-      }
+      renderOverlayQR();
     }
 
     function stopSession() {
@@ -366,10 +324,9 @@
       document.getElementById("slidesync-stop").style.display = "none";
 
       activeRoomCode = null;
-      closePiP();
+      renderOverlayQR();
     }
 
-    // Navigation listeners (debounced to avoid flooding on rapid navigation)
     window.addEventListener("hashchange", debouncedCheckSlide);
     document.addEventListener("keydown", (e) => {
       if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown",
@@ -379,18 +336,18 @@
     });
     document.addEventListener("click", debouncedCheckSlide);
     setTimeout(checkSlide, 1000);
-    // Heartbeat is now a cheap backstop. The PiP window is unaffected by it,
-    // so flicker is gone — the heartbeat is just a no-cost no-op for the QR.
+    // Heartbeat at 10s. Each capture-slide message includes the QR rect
+    // so the background script can paint it out of the snapshot.
     setInterval(heartbeatCapture, 10000);
 
-    // Inject UI
     injectDrawer();
+    injectQROverlay();
 
-    // Restore active session + QR settings from storage
     chrome.storage.local.get(
-      ["roomCode", "isActive", "qrColor"],
+      ["roomCode", "isActive", "qrColor", "qrPosition"],
       (result) => {
         qrColor = result.qrColor || "off";
+        qrPosition = result.qrPosition || "bottom-right";
 
         if (result.isActive && result.roomCode) {
           activeRoomCode = result.roomCode;
@@ -401,29 +358,22 @@
           document.getElementById("slidesync-stop").style.display = "block";
         }
         syncDrawerSettings();
-        // Cannot auto-open PiP here — no user gesture. User has to click the
-        // color button again to re-open the QR window after page load.
+        renderOverlayQR();
       },
     );
 
-    // Sync state when storage changes (e.g., from popup or pip-close handler)
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== "local") return;
-      if (changes.qrColor) {
-        qrColor = changes.qrColor.newValue || "off";
-        syncDrawerSettings();
-        // Don't try to open PiP here — without a user gesture it'll fail.
-        // The drawer click handler covers that path. We do close it though.
-        if (qrColor === "off") closePiP();
-      }
-      if (changes.roomCode) activeRoomCode = changes.roomCode.newValue || null;
-      if (changes.isActive && !changes.isActive.newValue) {
-        activeRoomCode = null;
-        closePiP();
-      }
+      let needsRender = false;
+      let settingsChanged = false;
+      if (changes.qrColor) { qrColor = changes.qrColor.newValue || "off"; needsRender = true; settingsChanged = true; }
+      if (changes.qrPosition) { qrPosition = changes.qrPosition.newValue || "bottom-right"; needsRender = true; settingsChanged = true; }
+      if (changes.roomCode) { activeRoomCode = changes.roomCode.newValue || null; needsRender = true; }
+      if (changes.isActive && !changes.isActive.newValue) { activeRoomCode = null; needsRender = true; }
+      if (settingsChanged) syncDrawerSettings();
+      if (needsRender) renderOverlayQR();
     });
 
-    // Auto-fullscreen: re-enter on every interaction (handles Esc exit)
     let userHasInteracted = false;
     function markInteracted() { userHasInteracted = true; }
     document.addEventListener("click", markInteracted, { once: true });
@@ -437,7 +387,7 @@
     document.addEventListener("click", ensureFullscreen);
     document.addEventListener("keydown", ensureFullscreen);
 
-    console.log("[slidesync] Present mode active with drawer + PiP QR");
+    console.log("[slidesync] Present mode active with edge-stretch QR patching");
   }
 
   // ===== EDIT MODE =====
@@ -463,7 +413,6 @@
         chrome.runtime.sendMessage({ type: "stop-session" });
       });
       presentContainer.before(btn);
-
       console.log("[slidesync] Edit mode - button injected next to Present");
     }
   }
