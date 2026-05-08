@@ -15,5 +15,14 @@
   "presentButtonAria": { "message": "slidesync でプレゼンテーション" },
   "inspiredBy": { "message": "インスパイア元" },
   "sponsorMessage": { "message": "slidesync の運営には月約10ドルかかります。プレゼンテーションで役立っていたら、少しのご支援がとても励みになります。" },
-  "sponsorCta": { "message": "スポンサーになる" }
+  "sponsorCta": { "message": "スポンサーになる" },
+  "qrCodeLabel": { "message": "QRコード" },
+  "qrColorOff": { "message": "オフ" },
+  "qrColorBlack": { "message": "黒" },
+  "qrColorWhite": { "message": "白" },
+  "qrPositionLabel": { "message": "位置" },
+  "qrPositionTopLeft": { "message": "左上" },
+  "qrPositionTopRight": { "message": "右上" },
+  "qrPositionBottomLeft": { "message": "左下" },
+  "qrPositionBottomRight": { "message": "右下" }
 }

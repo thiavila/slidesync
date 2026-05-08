@@ -9,23 +9,36 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "start-session") {
     connectWebSocket(message.wsUrl, message.roomCode);
     sendResponse({ ok: true });
+    return; // sync response
   }
 
   if (message.type === "stop-session") {
     disconnectWebSocket();
     sendResponse({ ok: true });
+    return; // sync response
   }
 
   if (message.type === "capture-slide") {
+    // Always respond when done so the content script can re-show the QR
+    // overlay it hid right before requesting the capture.
+    let responded = false;
+    const respond = () => {
+      if (responded) return;
+      responded = true;
+      try { sendResponse({ ok: true }); } catch (_) { /* channel closed */ }
+    };
+
     if (!ws) {
       console.warn("[slidesync] capture-slide skipped: no WebSocket (start session first)");
-      return;
+      respond();
+      return; // no async work pending
     }
     if (ws.readyState !== WebSocket.OPEN) {
       console.warn(
         "[slidesync] capture-slide skipped: WebSocket not open, state=",
         ws.readyState,
       );
+      respond();
       return;
     }
 
@@ -36,12 +49,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           "[slidesync] capture-slide skipped: tabs.get error",
           chrome.runtime.lastError.message,
         );
+        respond();
         return;
       }
       if (!tab.active) {
         console.warn(
           "[slidesync] capture-slide skipped: presenter tab is not active (focus it to capture)",
         );
+        respond();
         return;
       }
 
@@ -49,28 +64,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sender.tab.windowId,
         { format: "jpeg", quality: 70 },
         (imageData) => {
-          if (chrome.runtime.lastError) {
-            console.warn("[slidesync] Capture error:", chrome.runtime.lastError.message);
-            return;
-          }
+          try {
+            if (chrome.runtime.lastError) {
+              console.warn("[slidesync] Capture error:", chrome.runtime.lastError.message);
+              return;
+            }
 
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(
-              JSON.stringify({
-                type: "slide-update",
-                slideNumber: message.slideNumber,
-                imageData: imageData,
-              })
-            );
-            console.log("[slidesync] Sent slide", message.slideNumber, `(${(imageData.length / 1024).toFixed(0)} KB)`);
-            chrome.storage.local.set({ currentSlide: message.slideNumber });
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(
+                JSON.stringify({
+                  type: "slide-update",
+                  slideNumber: message.slideNumber,
+                  imageData: imageData,
+                })
+              );
+              console.log("[slidesync] Sent slide", message.slideNumber, `(${(imageData.length / 1024).toFixed(0)} KB)`);
+              chrome.storage.local.set({ currentSlide: message.slideNumber });
+            }
+          } finally {
+            // Respond after the capture (and ws send attempt) completes so
+            // the content script restores the overlay only once the snapshot
+            // is in flight, never before.
+            respond();
           }
         }
       );
     });
+
+    return true; // keep the response channel open for the async path
   }
 
-  return true;
+  return; // unhandled
 });
 
 function connectWebSocket(wsUrl, roomCode) {

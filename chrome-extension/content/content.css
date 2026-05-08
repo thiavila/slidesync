@@ -281,3 +281,55 @@
 .slidesync-drawer .slidesync-sponsor a:hover {
   text-decoration: underline;
 }
+
+/* ===== PRESENT MODE: Persistent QR overlay ===== */
+.slidesync-qr-overlay {
+  position: fixed;
+  z-index: 99997;
+  width: 144px;
+  padding: 8px;
+  border-radius: 8px;
+  display: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  transition: opacity 180ms ease-out;
+  opacity: 1;
+  pointer-events: none;
+  font-family: 'Google Sans', sans-serif;
+}
+
+.slidesync-qr-overlay[data-color="black"] {
+  display: block;
+  background: #ffffff;
+}
+
+.slidesync-qr-overlay[data-color="white"] {
+  display: block;
+  background: #000000;
+}
+
+.slidesync-qr-overlay[data-position="top-left"]      { top: 16px;    left: 16px;  }
+.slidesync-qr-overlay[data-position="top-right"]     { top: 16px;    right: 16px; }
+.slidesync-qr-overlay[data-position="bottom-left"]   { bottom: 16px; left: 16px;  }
+.slidesync-qr-overlay[data-position="bottom-right"]  { bottom: 16px; right: 16px; }
+
+.slidesync-qr-overlay .slidesync-qr-canvas {
+  display: flex;
+  justify-content: center;
+}
+
+.slidesync-qr-overlay .slidesync-qr-canvas img,
+.slidesync-qr-overlay .slidesync-qr-canvas canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Hide overlay (and drawer) instantly during capture so QR is excluded
+   from chrome.tabs.captureVisibleTab snapshots. Re-show with a small
+   fade so the flicker feels intentional rather than glitchy. */
+html.slidesync-capturing .slidesync-qr-overlay,
+html.slidesync-capturing .slidesync-drawer-container {
+  opacity: 0 !important;
+  transition: none !important;
+}

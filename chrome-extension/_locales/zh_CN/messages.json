@@ -15,5 +15,14 @@
   "presentButtonAria": { "message": "使用 slidesync 进行演示" },
   "inspiredBy": { "message": "灵感来自" },
   "sponsorMessage": { "message": "运营 slidesync 每月大约需要10美元。如果它对您的演示有帮助，一点小小的贡献对我意义重大。" },
-  "sponsorCta": { "message": "成为赞助者" }
+  "sponsorCta": { "message": "成为赞助者" },
+  "qrCodeLabel": { "message": "二维码" },
+  "qrColorOff": { "message": "关闭" },
+  "qrColorBlack": { "message": "黑色" },
+  "qrColorWhite": { "message": "白色" },
+  "qrPositionLabel": { "message": "位置" },
+  "qrPositionTopLeft": { "message": "左上" },
+  "qrPositionTopRight": { "message": "右上" },
+  "qrPositionBottomLeft": { "message": "左下" },
+  "qrPositionBottomRight": { "message": "右下" }
 }

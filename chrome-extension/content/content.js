@@ -23,6 +23,9 @@
   function initPresentMode() {
     let lastSlide = null;
     let hideTimeout = null;
+    let qrColor = "off";
+    let qrPosition = "bottom-right";
+    let activeRoomCode = null;
 
     function getSlideNumber() {
       // Use the slide counter in the toolbar (same method as Remote for Slides)
@@ -45,23 +48,74 @@
       return lastSlide || 1;
     }
 
+    // ----- Capture-exclusion: ref-counted hide of any slidesync UI -----
+    // captureVisibleTab grabs everything visible. To keep the persistent QR
+    // (and drawer) out of student snapshots, toggle a class on <html> right
+    // before each capture and restore it after the background callback.
+    //
+    // Generation token: if the safety timer ever bumps `generation` (because
+    // a capture stalled past 1500ms), any straggler callback from that older
+    // capture must become a no-op — otherwise it could prematurely re-show
+    // the overlay while a freshly-launched capture is still in flight, and
+    // the QR would leak into the next snapshot.
+    let captureInflight = 0;
+    let captureGeneration = 0;
+    let safetyTimer = null;
+
+    function hideForCapture() {
+      document.documentElement.classList.add("slidesync-capturing");
+    }
+
+    function showAfterCapture() {
+      document.documentElement.classList.remove("slidesync-capturing");
+    }
+
+    function requestCapture(slideNumber) {
+      const myGen = captureGeneration;
+      captureInflight++;
+      hideForCapture();
+
+      // Safety net: if the background callback never arrives (service worker
+      // tear-down, tab inactive, ws send drop, …) restore the UI within 1.5s
+      // so the QR doesn't vanish permanently from the presenter's POV.
+      clearTimeout(safetyTimer);
+      safetyTimer = setTimeout(() => {
+        captureGeneration++;       // invalidate any pending callbacks
+        captureInflight = 0;
+        showAfterCapture();
+      }, 1500);
+
+      // One rAF is enough — chrome.runtime.sendMessage round-trips through
+      // the worker queue, which guarantees the browser paints the hidden
+      // state before captureVisibleTab fires.
+      requestAnimationFrame(() => {
+        chrome.runtime.sendMessage(
+          { type: "capture-slide", slideNumber },
+          () => {
+            // Read lastError to avoid unchecked-runtime-error console noise.
+            void chrome.runtime.lastError;
+            if (myGen !== captureGeneration) return; // stale, safety already fired
+            if (--captureInflight <= 0) {
+              captureInflight = 0;
+              clearTimeout(safetyTimer);
+              showAfterCapture();
+            }
+          },
+        );
+      });
+    }
+
     function checkSlide() {
       const current = getSlideNumber();
       if (current === lastSlide) return;
       lastSlide = current;
-      chrome.runtime.sendMessage({
-        type: "capture-slide",
-        slideNumber: current,
-      });
+      requestCapture(current);
     }
 
     function heartbeatCapture() {
       const current = getSlideNumber();
       lastSlide = current;
-      chrome.runtime.sendMessage({
-        type: "capture-slide",
-        slideNumber: current,
-      });
+      requestCapture(current);
     }
 
     let checkSlideTimer = null;
@@ -117,7 +171,7 @@
                 ${msg("inspiredBy")} <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
                 by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
               </div>
-              <div class="slidesync-version">slidesync v2.2</div>
+              <div class="slidesync-version">slidesync v2.3</div>
             </div>
           </div>
         </div>
@@ -161,25 +215,23 @@
       hideTimeout = setTimeout(() => {
         container.removeAttribute("active");
       }, 4000);
+    }
 
-      // Restore active session
-      chrome.storage.local.get(["roomCode", "isActive"], (result) => {
-        if (result.isActive && result.roomCode) {
-          document.getElementById("slidesync-code").textContent = result.roomCode;
-          document.getElementById("slidesync-dot").classList.remove("inactive");
-          document.getElementById("slidesync-status").textContent = msg("statusActive");
-          document.getElementById("slidesync-start").style.display = "none";
-          document.getElementById("slidesync-stop").style.display = "block";
-          showQRCode(result.roomCode);
-        }
-      });
+    function injectQROverlay() {
+      const overlay = document.createElement("div");
+      overlay.className = "slidesync-qr-overlay";
+      overlay.id = "slidesync-qr-overlay";
+      overlay.setAttribute("data-color", "off");
+      overlay.setAttribute("data-position", "bottom-right");
+      overlay.innerHTML = `<div class="slidesync-qr-canvas" id="slidesync-qr-canvas"></div>`;
+      document.body.appendChild(overlay);
     }
 
     function generateRoomCode() {
       return Math.floor(100000 + Math.random() * 900000).toString();
     }
 
-    function showQRCode(roomCode) {
+    function showDrawerQRCode(roomCode) {
       const sessionUrl = `${WEBAPP_URL}/session/${roomCode}`;
       const qrSection = document.getElementById("slidesync-qr-section");
       const qrContainer = document.getElementById("slidesync-qr");
@@ -196,6 +248,39 @@
       });
       urlEl.textContent = sessionUrl;
       qrSection.style.display = "block";
+    }
+
+    function renderOverlayQR() {
+      const overlay = document.getElementById("slidesync-qr-overlay");
+      if (!overlay) return;
+
+      overlay.setAttribute("data-position", qrPosition);
+
+      const canvas = document.getElementById("slidesync-qr-canvas");
+      if (!canvas) return;
+
+      // No session or off → empty overlay. Force data-color="off" so CSS
+      // hides it even if the user picked a color before starting a session.
+      if (!activeRoomCode || qrColor === "off") {
+        overlay.setAttribute("data-color", "off");
+        canvas.innerHTML = "";
+        return;
+      }
+      overlay.setAttribute("data-color", qrColor);
+
+      const sessionUrl = `${WEBAPP_URL}/session/${activeRoomCode}`;
+      const colorDark = qrColor === "white" ? "#ffffff" : "#000000";
+      const colorLight = qrColor === "white" ? "#000000" : "#ffffff";
+
+      canvas.innerHTML = "";
+      new QRCode(canvas, {
+        text: sessionUrl,
+        width: 128,
+        height: 128,
+        colorDark,
+        colorLight,
+        correctLevel: QRCode.CorrectLevel.M,
+      });
     }
 
     function startSession() {
@@ -220,7 +305,9 @@
       document.getElementById("slidesync-start").style.display = "none";
       document.getElementById("slidesync-stop").style.display = "block";
 
-      showQRCode(roomCode);
+      activeRoomCode = roomCode;
+      showDrawerQRCode(roomCode);
+      renderOverlayQR();
     }
 
     function stopSession() {
@@ -234,6 +321,9 @@
       document.getElementById("slidesync-stop").style.display = "none";
       document.getElementById("slidesync-qr-section").style.display = "none";
       document.getElementById("slidesync-qr").innerHTML = "";
+
+      activeRoomCode = null;
+      renderOverlayQR();
     }
 
     // Navigation listeners (debounced to avoid flooding on rapid navigation)
@@ -248,8 +338,40 @@
     setTimeout(checkSlide, 1000);
     setInterval(heartbeatCapture, 2000);
 
-    // Inject drawer UI
+    // Inject UI
     injectDrawer();
+    injectQROverlay();
+
+    // Restore active session + QR settings from storage
+    chrome.storage.local.get(
+      ["roomCode", "isActive", "qrColor", "qrPosition"],
+      (result) => {
+        qrColor = result.qrColor || "off";
+        qrPosition = result.qrPosition || "bottom-right";
+
+        if (result.isActive && result.roomCode) {
+          activeRoomCode = result.roomCode;
+          document.getElementById("slidesync-code").textContent = result.roomCode;
+          document.getElementById("slidesync-dot").classList.remove("inactive");
+          document.getElementById("slidesync-status").textContent = msg("statusActive");
+          document.getElementById("slidesync-start").style.display = "none";
+          document.getElementById("slidesync-stop").style.display = "block";
+          showDrawerQRCode(result.roomCode);
+        }
+        renderOverlayQR();
+      },
+    );
+
+    // React to popup-driven changes to QR settings
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== "local") return;
+      let needsRender = false;
+      if (changes.qrColor) { qrColor = changes.qrColor.newValue || "off"; needsRender = true; }
+      if (changes.qrPosition) { qrPosition = changes.qrPosition.newValue || "bottom-right"; needsRender = true; }
+      if (changes.roomCode) { activeRoomCode = changes.roomCode.newValue || null; needsRender = true; }
+      if (changes.isActive && !changes.isActive.newValue) { activeRoomCode = null; needsRender = true; }
+      if (needsRender) renderOverlayQR();
+    });
 
     // Auto-fullscreen: re-enter on every interaction (handles Esc exit)
     let userHasInteracted = false;
@@ -265,7 +387,7 @@
     document.addEventListener("click", ensureFullscreen);
     document.addEventListener("keydown", ensureFullscreen);
 
-    console.log("[slidesync] Present mode active with drawer");
+    console.log("[slidesync] Present mode active with drawer + QR overlay");
   }
 
   // ===== EDIT MODE =====
