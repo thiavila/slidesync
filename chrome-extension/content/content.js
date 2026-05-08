@@ -71,6 +71,19 @@
     }
 
     function requestCapture(slideNumber) {
+      // Only run the hide/show dance when there's actually a QR overlay
+      // visible to exclude. Without this gate the heartbeat would toggle
+      // .slidesync-capturing every 2s for the whole session and the drawer
+      // would visibly flicker.
+      const overlayVisible = qrColor !== "off" && !!activeRoomCode;
+      if (!overlayVisible) {
+        chrome.runtime.sendMessage(
+          { type: "capture-slide", slideNumber },
+          () => { void chrome.runtime.lastError; },
+        );
+        return;
+      }
+
       const myGen = captureGeneration;
       captureInflight++;
       hideForCapture();
