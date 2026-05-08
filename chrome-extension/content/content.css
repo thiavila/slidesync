@@ -211,33 +211,6 @@
   background-color: #d32f2f;
 }
 
-/* Divider */
-.slidesync-drawer .slidesync-hr {
-  height: 2px;
-  width: 100%;
-  background: rgba(0,0,0,0.1);
-  margin: 20px 0;
-}
-
-/* QR Code */
-.slidesync-drawer .slidesync-qr-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-.slidesync-drawer .slidesync-qr-container img {
-  border-radius: 8px;
-}
-
-.slidesync-drawer .slidesync-url {
-  text-align: center;
-  font-size: 11px;
-  color: #33AEFE;
-  word-break: break-all;
-  margin-bottom: 4px;
-}
-
 /* Footer */
 .slidesync-drawer .slidesync-footer {
   text-align: center;
@@ -282,49 +255,107 @@
   text-decoration: underline;
 }
 
-/* ===== Drawer settings (QR color + position) ===== */
+/* ===== Drawer settings (collapsible QR controls) ===== */
 .slidesync-drawer .slidesync-settings {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
   width: 100%;
   margin-bottom: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  padding-top: 12px;
+}
+
+.slidesync-drawer .slidesync-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px 4px;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+  letter-spacing: normal;
+  text-align: left;
+  border-radius: 6px;
+  opacity: 1;
+  transition: background 120ms ease;
+}
+
+.slidesync-drawer .slidesync-settings-header:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.slidesync-drawer .slidesync-chevron {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #888;
+  transition: transform 200ms ease;
+}
+
+.slidesync-drawer .slidesync-settings[data-expanded="true"] .slidesync-chevron {
+  transform: rotate(180deg);
+}
+
+/* Smooth expand using grid-rows trick (auto-height friendly, no JS measure) */
+.slidesync-drawer .slidesync-settings-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease;
+}
+
+.slidesync-drawer .slidesync-settings[data-expanded="true"] .slidesync-settings-body {
+  grid-template-rows: 1fr;
+}
+
+.slidesync-drawer .slidesync-settings-body-inner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 6px;
 }
 
 .slidesync-drawer .slidesync-setting-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .slidesync-drawer .slidesync-setting-label {
   font-size: 11px;
-  color: #777;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #888;
+  letter-spacing: 0.3px;
+  padding-left: 4px;
 }
 
+/* iOS-style pill segmented control */
 .slidesync-drawer .slidesync-segmented {
   display: flex;
-  background: #fff;
-  border-radius: 6px;
-  padding: 2px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  padding: 3px;
   gap: 2px;
-  border: 1px solid #ddd;
+  border: none;
 }
 
 .slidesync-drawer .slidesync-seg {
   flex: 1;
   border: none;
   background: transparent;
-  color: #555;
+  color: #666;
   font: inherit;
-  font-size: 13px;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
   font-weight: 500;
-  padding: 6px 4px;
-  border-radius: 4px;
+  padding: 7px 8px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
+  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -332,35 +363,35 @@
   width: auto;
   letter-spacing: normal;
   opacity: 1;
-  font-family: inherit;
 }
 
-.slidesync-drawer .slidesync-seg:hover {
-  background: #eee;
+.slidesync-drawer .slidesync-seg:hover:not(.active) {
+  color: #333;
 }
 
 .slidesync-drawer .slidesync-seg.active {
-  background: #33AEFE;
-  color: #fff;
+  background: #ffffff;
+  color: #333;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
 }
 
 .slidesync-drawer .slidesync-segmented.positions .slidesync-seg {
-  padding: 4px;
+  padding: 6px;
 }
 
 .slidesync-drawer .slidesync-pos-icon {
   position: relative;
-  width: 22px;
-  height: 22px;
-  border: 1.5px solid currentColor;
+  width: 18px;
+  height: 18px;
+  border: 1.4px solid currentColor;
   border-radius: 3px;
   display: inline-block;
 }
 
 .slidesync-drawer .slidesync-pos-icon > span {
   position: absolute;
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 1px;
   background: currentColor;
 }
@@ -370,29 +401,21 @@
 .slidesync-drawer .slidesync-pos-icon .slidesync-dot-bl { bottom: 2px; left: 2px; }
 .slidesync-drawer .slidesync-pos-icon .slidesync-dot-br { bottom: 2px; right: 2px; }
 
-/* ===== PRESENT MODE: Persistent QR overlay ===== */
+/* ===== PRESENT MODE: Persistent QR overlay (transparent backing) ===== */
 .slidesync-qr-overlay {
   position: fixed;
   z-index: 99997;
-  width: 144px;
-  padding: 8px;
-  border-radius: 8px;
+  width: 115px;
+  padding: 0;
   display: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   transition: opacity 180ms ease-out;
   opacity: 1;
   pointer-events: none;
-  font-family: 'Google Sans', sans-serif;
 }
 
-.slidesync-qr-overlay[data-color="black"] {
-  display: block;
-  background: #ffffff;
-}
-
+.slidesync-qr-overlay[data-color="black"],
 .slidesync-qr-overlay[data-color="white"] {
   display: block;
-  background: #000000;
 }
 
 .slidesync-qr-overlay[data-position="top-left"]      { top: 16px;    left: 16px;  }
@@ -410,14 +433,13 @@
   display: block;
   width: 100%;
   height: auto;
-  border-radius: 4px;
+  background: transparent;
 }
 
-/* Hide overlay (and drawer) instantly during capture so QR is excluded
-   from chrome.tabs.captureVisibleTab snapshots. Re-show with a small
-   fade so the flicker feels intentional rather than glitchy. */
-html.slidesync-capturing .slidesync-qr-overlay,
-html.slidesync-capturing .slidesync-drawer-container {
+/* Hide overlay during capture so the QR is excluded from
+   chrome.tabs.captureVisibleTab snapshots. Drawer is left alone — its
+   interior QR section is gone now and the closed drawer is offscreen. */
+html.slidesync-capturing .slidesync-qr-overlay {
   opacity: 0 !important;
   transition: none !important;
 }
