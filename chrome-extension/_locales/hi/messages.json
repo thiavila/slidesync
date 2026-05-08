@@ -18,6 +18,7 @@
   "sponsorCta": { "message": "स्पॉन्सर बनें" },
   "qrCodeLabel": { "message": "QR कोड" },
   "qrColorOff": { "message": "बंद" },
+  "qrCodeOn": { "message": "चालू" },
   "qrColorBlack": { "message": "काला" },
   "qrColorWhite": { "message": "सफेद" },
   "qrPositionLabel": { "message": "स्थान" },

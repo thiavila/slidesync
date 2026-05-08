@@ -409,16 +409,22 @@
 .slidesync-qr-overlay {
   position: fixed;
   z-index: 99997;
-  width: 115px;
+  width: 132px;
   padding: 0;
   display: none;
   opacity: 1;
   pointer-events: none;
   background: transparent;
+  /* Each "dark" module renders as fully opaque white. Difference blend turns
+     the on-screen pixel into the inverse of whatever's underneath the QR,
+     so the code is always high-contrast against any slide color. The
+     background script reverses the same operation per dark-module pixel
+     to recover the original slide content in the captured frame. */
+  mix-blend-mode: difference;
+  isolation: auto;
 }
 
-.slidesync-qr-overlay[data-color="black"],
-.slidesync-qr-overlay[data-color="white"] {
+.slidesync-qr-overlay[data-active="true"] {
   display: block;
 }
 

@@ -18,6 +18,7 @@
   "sponsorCta": { "message": "Unterstützen" },
   "qrCodeLabel": { "message": "QR-Code" },
   "qrColorOff": { "message": "Aus" },
+  "qrCodeOn": { "message": "Aktiv" },
   "qrColorBlack": { "message": "Schwarz" },
   "qrColorWhite": { "message": "Weiß" },
   "qrPositionLabel": { "message": "Position" },

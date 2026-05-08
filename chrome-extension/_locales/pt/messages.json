@@ -18,6 +18,7 @@
   "sponsorCta": { "message": "Seja um patrocinador" },
   "qrCodeLabel": { "message": "QR code" },
   "qrColorOff": { "message": "Desligado" },
+  "qrCodeOn": { "message": "Ativo" },
   "qrColorBlack": { "message": "Preto" },
   "qrColorWhite": { "message": "Branco" },
   "qrPositionLabel": { "message": "Posicao" },

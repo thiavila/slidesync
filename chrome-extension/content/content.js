@@ -23,9 +23,10 @@
   function initPresentMode() {
     let lastSlide = null;
     let hideTimeout = null;
-    let qrColor = "off";
+    let qrEnabled = false;
     let qrPosition = "bottom-right";
     let activeRoomCode = null;
+    let qrMatrix = null; // array of "0"/"1" strings, one per row
 
     function getSlideNumber() {
       const counter = document.querySelector(".goog-flat-menu-button-caption") ||
@@ -48,7 +49,7 @@
     // background script can map it onto the captured image (which has its
     // own DPR-scaled dimensions) without us having to send any pixel math.
     function getQRRect() {
-      if (qrColor === "off" || !activeRoomCode) return null;
+      if (!qrEnabled || !activeRoomCode || !qrMatrix) return null;
       const overlay = document.getElementById("slidesync-qr-overlay");
       if (!overlay) return null;
       const r = overlay.getBoundingClientRect();
@@ -56,17 +57,12 @@
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       if (vw === 0 || vh === 0) return null;
-      // Inflate slightly (2 CSS pixels each side) to make sure we cover the
-      // QR fully even with subpixel rounding in the captured image. The
-      // patch is "stretch nearby slide pixels," so a couple extra pixels is
-      // invisible but margins of error are not.
-      const pad = 2;
       return {
-        x: Math.max(0, (r.left - pad)) / vw,
-        y: Math.max(0, (r.top - pad)) / vh,
-        width: Math.min(vw, r.width + pad * 2) / vw,
-        height: Math.min(vh, r.height + pad * 2) / vh,
-        position: qrPosition,
+        x: r.left / vw,
+        y: r.top / vh,
+        width: r.width / vw,
+        height: r.height / vh,
+        matrix: qrMatrix,
       };
     }
 
@@ -140,10 +136,9 @@
               <div class="slidesync-settings-body">
                 <div class="slidesync-settings-body-inner">
                   <div class="slidesync-setting-row">
-                    <div class="slidesync-segmented" id="slidesync-qr-color-group">
+                    <div class="slidesync-segmented" id="slidesync-qr-enabled-group">
                       <button type="button" class="slidesync-seg" data-value="off">${msg("qrColorOff")}</button>
-                      <button type="button" class="slidesync-seg" data-value="black">${msg("qrColorBlack")}</button>
-                      <button type="button" class="slidesync-seg" data-value="white">${msg("qrColorWhite")}</button>
+                      <button type="button" class="slidesync-seg" data-value="on">${msg("qrCodeOn")}</button>
                     </div>
                   </div>
                   <div class="slidesync-setting-row">
@@ -176,7 +171,7 @@
                 ${msg("inspiredBy")} <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
                 by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
               </div>
-              <div class="slidesync-version">slidesync v2.5</div>
+              <div class="slidesync-version">slidesync v2.6</div>
             </div>
           </div>
         </div>
@@ -218,9 +213,9 @@
         settingsToggle.setAttribute("aria-expanded", expanded ? "false" : "true");
       });
 
-      document.querySelectorAll("#slidesync-qr-color-group .slidesync-seg").forEach((b) => {
+      document.querySelectorAll("#slidesync-qr-enabled-group .slidesync-seg").forEach((b) => {
         b.addEventListener("click", () => {
-          chrome.storage.local.set({ qrColor: b.dataset.value });
+          chrome.storage.local.set({ qrEnabled: b.dataset.value === "on" });
         });
       });
       document.querySelectorAll("#slidesync-qr-position-group .slidesync-seg").forEach((b) => {
@@ -250,12 +245,31 @@
     }
 
     function syncDrawerSettings() {
-      document.querySelectorAll("#slidesync-qr-color-group .slidesync-seg").forEach((b) => {
-        b.classList.toggle("active", b.dataset.value === qrColor);
+      const enabledValue = qrEnabled ? "on" : "off";
+      document.querySelectorAll("#slidesync-qr-enabled-group .slidesync-seg").forEach((b) => {
+        b.classList.toggle("active", b.dataset.value === enabledValue);
       });
       document.querySelectorAll("#slidesync-qr-position-group .slidesync-seg").forEach((b) => {
         b.classList.toggle("active", b.dataset.value === qrPosition);
       });
+    }
+
+    // Extract the QR module matrix from the lib's internal model so the
+    // background script can map "this captured pixel is at a dark module"
+    // and reverse the difference blend.
+    function extractMatrix(qrInstance) {
+      const model = qrInstance && qrInstance._oQRCode;
+      if (!model || typeof model.getModuleCount !== "function") return null;
+      const n = model.getModuleCount();
+      const rows = [];
+      for (let r = 0; r < n; r++) {
+        let row = "";
+        for (let c = 0; c < n; c++) {
+          row += model.isDark(r, c) ? "1" : "0";
+        }
+        rows.push(row);
+      }
+      return rows;
     }
 
     function renderOverlayQR() {
@@ -266,25 +280,32 @@
       const canvas = document.getElementById("slidesync-qr-canvas");
       if (!canvas) return;
 
-      if (!activeRoomCode || qrColor === "off") {
-        overlay.setAttribute("data-color", "off");
+      if (!activeRoomCode || !qrEnabled) {
+        overlay.setAttribute("data-active", "false");
         canvas.innerHTML = "";
+        qrMatrix = null;
         return;
       }
-      overlay.setAttribute("data-color", qrColor);
+      overlay.setAttribute("data-active", "true");
 
       const sessionUrl = `${WEBAPP_URL}/session/${activeRoomCode}`;
-      const colorDark = qrColor === "white" ? "#ffffff" : "#000000";
 
       canvas.innerHTML = "";
-      new QRCode(canvas, {
+      // White modules + mix-blend-mode: difference (in CSS) means the on-screen
+      // pixel becomes the inverse of the slide pixel underneath each dark
+      // module. The "Off" / "On" toggle is enough — there's no color choice
+      // because contrast is automatic.
+      // High error correction → denser matrix (33×33 for ~36-char URL),
+      // visually finer / less heavy than M-level (29×29).
+      const qrcode = new QRCode(canvas, {
         text: sessionUrl,
-        width: 115,
-        height: 115,
-        colorDark,
+        width: 132,
+        height: 132,
+        colorDark: "#ffffff",
         colorLight: "rgba(0,0,0,0)",
-        correctLevel: QRCode.CorrectLevel.M,
+        correctLevel: QRCode.CorrectLevel.H,
       });
+      qrMatrix = extractMatrix(qrcode);
     }
 
     function startSession() {
@@ -344,9 +365,9 @@
     injectQROverlay();
 
     chrome.storage.local.get(
-      ["roomCode", "isActive", "qrColor", "qrPosition"],
+      ["roomCode", "isActive", "qrEnabled", "qrPosition"],
       (result) => {
-        qrColor = result.qrColor || "off";
+        qrEnabled = !!result.qrEnabled;
         qrPosition = result.qrPosition || "bottom-right";
 
         if (result.isActive && result.roomCode) {
@@ -366,7 +387,7 @@
       if (area !== "local") return;
       let needsRender = false;
       let settingsChanged = false;
-      if (changes.qrColor) { qrColor = changes.qrColor.newValue || "off"; needsRender = true; settingsChanged = true; }
+      if (changes.qrEnabled) { qrEnabled = !!changes.qrEnabled.newValue; needsRender = true; settingsChanged = true; }
       if (changes.qrPosition) { qrPosition = changes.qrPosition.newValue || "bottom-right"; needsRender = true; settingsChanged = true; }
       if (changes.roomCode) { activeRoomCode = changes.roomCode.newValue || null; needsRender = true; }
       if (changes.isActive && !changes.isActive.newValue) { activeRoomCode = null; needsRender = true; }

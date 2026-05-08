@@ -18,6 +18,7 @@
   "sponsorCta": { "message": "成为赞助者" },
   "qrCodeLabel": { "message": "二维码" },
   "qrColorOff": { "message": "关闭" },
+  "qrCodeOn": { "message": "开启" },
   "qrColorBlack": { "message": "黑色" },
   "qrColorWhite": { "message": "白色" },
   "qrPositionLabel": { "message": "位置" },

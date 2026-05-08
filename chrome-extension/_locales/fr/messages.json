@@ -18,6 +18,7 @@
   "sponsorCta": { "message": "Devenir sponsor" },
   "qrCodeLabel": { "message": "Code QR" },
   "qrColorOff": { "message": "Désactivé" },
+  "qrCodeOn": { "message": "Actif" },
   "qrColorBlack": { "message": "Noir" },
   "qrColorWhite": { "message": "Blanc" },
   "qrPositionLabel": { "message": "Position" },

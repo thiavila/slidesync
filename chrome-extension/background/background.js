@@ -92,15 +92,17 @@ async function handleCaptureSlide(message, sender) {
   }
 }
 
-// Edge-stretch patch: replace the QR rectangle in the captured image with
-// a vertical extrusion of the slide pixels right above (or below) it.
-//
-// For corner-positioned QRs the strip taken from the slide-facing edge
-// is bilinearly stretched across the QR area by drawImage's resampling.
-// On slides with solid or gradient backgrounds near the corner, the patch
-// is essentially invisible. On busy photo backgrounds it shows up as a
-// soft vertical smudge — much more natural than a flat color box.
+// Inverse-blend patch: the on-screen QR is drawn with white modules and
+// mix-blend-mode: difference, so each dark-module pixel ends up as
+// (255 - slide_pixel) on screen — exactly what captureVisibleTab grabs.
+// We know which modules are dark (the matrix is shipped with the message),
+// so we walk the QR rectangle and invert every dark-module pixel back to
+// (255 - captured) = original slide pixel. Light modules pass through
+// untouched. Result: clean slide with the QR mathematically removed,
+// no edge-stretch smudge, no color-fill artifacts.
 async function patchQRArea(jpegDataUrl, qrRect) {
+  if (!qrRect.matrix || !qrRect.matrix.length) return jpegDataUrl;
+
   const blob = await fetch(jpegDataUrl).then((r) => r.blob());
   const bitmap = await createImageBitmap(blob);
   const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
@@ -111,30 +113,47 @@ async function patchQRArea(jpegDataUrl, qrRect) {
   const W = canvas.width;
   const H = canvas.height;
 
-  // Clamp normalized rect onto the actual image
   const x = Math.max(0, Math.floor(qrRect.x * W));
   const y = Math.max(0, Math.floor(qrRect.y * H));
   const w = Math.min(W - x, Math.ceil(qrRect.width * W));
   const h = Math.min(H - y, Math.ceil(qrRect.height * H));
-  if (w <= 0 || h <= 0) {
-    return await canvasToDataUrl(canvas);
+  if (w <= 0 || h <= 0) return await canvasToDataUrl(canvas);
+
+  const matrix = qrRect.matrix;
+  const N = matrix.length;
+  if (N === 0) return await canvasToDataUrl(canvas);
+
+  const cellW = w / N;
+  const cellH = h / N;
+
+  // Pre-compute per-row "is dark" lookup as Uint8Array for tight inner loop
+  const dark = new Uint8Array(N * N);
+  for (let r = 0; r < N; r++) {
+    const row = matrix[r];
+    for (let c = 0; c < N && c < row.length; c++) {
+      if (row.charCodeAt(c) === 49 /* "1" */) dark[r * N + c] = 1;
+    }
   }
 
-  // Pick the source row from the side facing the slide center.
-  // bottom-* corner → row above the QR; top-* corner → row below.
-  const isBottom = typeof qrRect.position === "string" && qrRect.position.startsWith("bottom");
-  const sourceY = isBottom
-    ? Math.max(0, y - 1)
-    : Math.min(H - 1, y + h);
+  const imageData = ctx.getImageData(x, y, w, h);
+  const data = imageData.data;
 
-  // drawImage resamples the 1-row source up to the full QR height —
-  // that's the entire trick, the browser does the bilinear stretch for us.
-  ctx.drawImage(
-    canvas,
-    x, sourceY, w, 1, // src
-    x, y, w, h,       // dst
-  );
+  for (let py = 0; py < h; py++) {
+    const cellR = Math.min(N - 1, Math.floor(py / cellH));
+    const rowBase = cellR * N;
+    for (let px = 0; px < w; px++) {
+      const cellC = Math.min(N - 1, Math.floor(px / cellW));
+      if (dark[rowBase + cellC]) {
+        const i = (py * w + px) * 4;
+        data[i]     = 255 - data[i];
+        data[i + 1] = 255 - data[i + 1];
+        data[i + 2] = 255 - data[i + 2];
+        // alpha untouched
+      }
+    }
+  }
 
+  ctx.putImageData(imageData, x, y);
   return await canvasToDataUrl(canvas);
 }
 
