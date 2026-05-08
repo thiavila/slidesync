@@ -175,6 +175,34 @@
             <button primary id="slidesync-start">${msg("startSession")}</button>
             <button class="danger" id="slidesync-stop" style="display:none;">${msg("stopSession")}</button>
 
+            <div class="slidesync-settings">
+              <div class="slidesync-setting-row">
+                <div class="slidesync-setting-label">${msg("qrCodeLabel")}</div>
+                <div class="slidesync-segmented" id="slidesync-qr-color-group">
+                  <button type="button" class="slidesync-seg" data-value="off">${msg("qrColorOff")}</button>
+                  <button type="button" class="slidesync-seg" data-value="black">${msg("qrColorBlack")}</button>
+                  <button type="button" class="slidesync-seg" data-value="white">${msg("qrColorWhite")}</button>
+                </div>
+              </div>
+              <div class="slidesync-setting-row">
+                <div class="slidesync-setting-label">${msg("qrPositionLabel")}</div>
+                <div class="slidesync-segmented positions" id="slidesync-qr-position-group">
+                  <button type="button" class="slidesync-seg" data-value="top-left" title="${msg("qrPositionTopLeft")}" aria-label="${msg("qrPositionTopLeft")}">
+                    <span class="slidesync-pos-icon"><span class="slidesync-dot-tl"></span></span>
+                  </button>
+                  <button type="button" class="slidesync-seg" data-value="top-right" title="${msg("qrPositionTopRight")}" aria-label="${msg("qrPositionTopRight")}">
+                    <span class="slidesync-pos-icon"><span class="slidesync-dot-tr"></span></span>
+                  </button>
+                  <button type="button" class="slidesync-seg" data-value="bottom-left" title="${msg("qrPositionBottomLeft")}" aria-label="${msg("qrPositionBottomLeft")}">
+                    <span class="slidesync-pos-icon"><span class="slidesync-dot-bl"></span></span>
+                  </button>
+                  <button type="button" class="slidesync-seg" data-value="bottom-right" title="${msg("qrPositionBottomRight")}" aria-label="${msg("qrPositionBottomRight")}">
+                    <span class="slidesync-pos-icon"><span class="slidesync-dot-br"></span></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <div class="slidesync-footer">
               <div class="slidesync-sponsor">
                 ${msg("sponsorMessage")}
@@ -223,6 +251,19 @@
       document.getElementById("slidesync-start").addEventListener("click", startSession);
       document.getElementById("slidesync-stop").addEventListener("click", stopSession);
 
+      // QR settings (color + position) — write to storage; the onChanged
+      // listener below picks up the value and re-renders selection state.
+      document.querySelectorAll("#slidesync-qr-color-group .slidesync-seg").forEach((b) => {
+        b.addEventListener("click", () => {
+          chrome.storage.local.set({ qrColor: b.dataset.value });
+        });
+      });
+      document.querySelectorAll("#slidesync-qr-position-group .slidesync-seg").forEach((b) => {
+        b.addEventListener("click", () => {
+          chrome.storage.local.set({ qrPosition: b.dataset.value });
+        });
+      });
+
       // Show drawer briefly on load
       container.setAttribute("active", "");
       hideTimeout = setTimeout(() => {
@@ -261,6 +302,15 @@
       });
       urlEl.textContent = sessionUrl;
       qrSection.style.display = "block";
+    }
+
+    function syncDrawerSettings() {
+      document.querySelectorAll("#slidesync-qr-color-group .slidesync-seg").forEach((b) => {
+        b.classList.toggle("active", b.dataset.value === qrColor);
+      });
+      document.querySelectorAll("#slidesync-qr-position-group .slidesync-seg").forEach((b) => {
+        b.classList.toggle("active", b.dataset.value === qrPosition);
+      });
     }
 
     function renderOverlayQR() {
@@ -371,6 +421,7 @@
           document.getElementById("slidesync-stop").style.display = "block";
           showDrawerQRCode(result.roomCode);
         }
+        syncDrawerSettings();
         renderOverlayQR();
       },
     );
@@ -379,10 +430,12 @@
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== "local") return;
       let needsRender = false;
-      if (changes.qrColor) { qrColor = changes.qrColor.newValue || "off"; needsRender = true; }
-      if (changes.qrPosition) { qrPosition = changes.qrPosition.newValue || "bottom-right"; needsRender = true; }
+      let settingsChanged = false;
+      if (changes.qrColor) { qrColor = changes.qrColor.newValue || "off"; needsRender = true; settingsChanged = true; }
+      if (changes.qrPosition) { qrPosition = changes.qrPosition.newValue || "bottom-right"; needsRender = true; settingsChanged = true; }
       if (changes.roomCode) { activeRoomCode = changes.roomCode.newValue || null; needsRender = true; }
       if (changes.isActive && !changes.isActive.newValue) { activeRoomCode = null; needsRender = true; }
+      if (settingsChanged) syncDrawerSettings();
       if (needsRender) renderOverlayQR();
     });
 

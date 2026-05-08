@@ -282,6 +282,94 @@
   text-decoration: underline;
 }
 
+/* ===== Drawer settings (QR color + position) ===== */
+.slidesync-drawer .slidesync-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.slidesync-drawer .slidesync-setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slidesync-drawer .slidesync-setting-label {
+  font-size: 11px;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.slidesync-drawer .slidesync-segmented {
+  display: flex;
+  background: #fff;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid #ddd;
+}
+
+.slidesync-drawer .slidesync-seg {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #555;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  width: auto;
+  letter-spacing: normal;
+  opacity: 1;
+  font-family: inherit;
+}
+
+.slidesync-drawer .slidesync-seg:hover {
+  background: #eee;
+}
+
+.slidesync-drawer .slidesync-seg.active {
+  background: #33AEFE;
+  color: #fff;
+}
+
+.slidesync-drawer .slidesync-segmented.positions .slidesync-seg {
+  padding: 4px;
+}
+
+.slidesync-drawer .slidesync-pos-icon {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.slidesync-drawer .slidesync-pos-icon > span {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.slidesync-drawer .slidesync-pos-icon .slidesync-dot-tl { top: 2px; left: 2px; }
+.slidesync-drawer .slidesync-pos-icon .slidesync-dot-tr { top: 2px; right: 2px; }
+.slidesync-drawer .slidesync-pos-icon .slidesync-dot-bl { bottom: 2px; left: 2px; }
+.slidesync-drawer .slidesync-pos-icon .slidesync-dot-br { bottom: 2px; right: 2px; }
+
 /* ===== PRESENT MODE: Persistent QR overlay ===== */
 .slidesync-qr-overlay {
   position: fixed;
