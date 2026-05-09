@@ -409,15 +409,12 @@
 .slidesync-qr-overlay {
   position: fixed;
   z-index: 99997;
-  /* 111 = 37 modules × 3 px per module. We MUST keep an integer pitch
-     so the lib's per-module fillRect lands on whole canvas pixels (no
-     fractional positions, no anti-aliasing halo, no leak past the mask
-     during the difference-blend cancellation). For the QR encoding
-     "https://slidesync.live/session/<6 digits>" at H correction the
-     module count is fixed at 37, so the valid sizes are 74 / 111 / 148
-     / 185 / .... 111 is the smallest size that still scans reliably
-     from a phone aimed at a typical projected slide. */
-  width: 111px;
+  /* Width is intentionally NOT fixed here — the inner canvas sizes itself
+     to (device-px buffer / DPR) so 1 canvas pixel maps to exactly 1
+     device pixel, with no scaling at all. The overlay just hugs that
+     canvas via display: inline-block + content-driven width. CSS size
+     ends up around ~111px at integer DPRs and a few px more at
+     fractional DPRs (1.5 → ~123, 2.5 → ~118). */
   padding: 0;
   display: none;
   opacity: 1;
@@ -449,15 +446,17 @@
   justify-content: center;
 }
 
-.slidesync-qr-overlay .slidesync-qr-canvas img,
+.slidesync-qr-overlay .slidesync-qr-canvas {
+  display: block;
+}
+
 .slidesync-qr-overlay .slidesync-qr-canvas canvas {
   display: block;
-  width: 100%;
-  height: auto;
   background: transparent;
-  /* Don't smooth when DPR upscales the buffer to device pixels. We want
-     each canvas pixel to map to a clean nxn block of device pixels so
-     the captured frame has crisp module boundaries. */
+  /* Inline width/height set by JS at (canvas-buffer-px / DPR). With
+     buffer sized to integer device pixels, browser does no scaling at
+     all on screen. Pixelated is a belt-and-suspenders hint for any
+     residual rounding. */
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
