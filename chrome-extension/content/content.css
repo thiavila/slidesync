@@ -433,13 +433,13 @@
   display: block;
 }
 
-/* Inset 6% of the viewport on each side. Pushes the QR a bit further
-   into the slide so it clears typical corner content (logos, page
-   numbers, footer text). ~115 px on a 1920-wide viewport. */
-.slidesync-qr-overlay[data-position="top-left"]      { top: 6vh;    left: 6vw;  }
-.slidesync-qr-overlay[data-position="top-right"]     { top: 6vh;    right: 6vw; }
-.slidesync-qr-overlay[data-position="bottom-left"]   { bottom: 6vh; left: 6vw;  }
-.slidesync-qr-overlay[data-position="bottom-right"]  { bottom: 6vh; right: 6vw; }
+/* Asymmetric inset: hug the side edge (slides rarely have content
+   pressed against the left/right edge), but lift well off the top/
+   bottom where headers, footers, page numbers and logos commonly live. */
+.slidesync-qr-overlay[data-position="top-left"]      { top: 10vh;    left: 2vw;  }
+.slidesync-qr-overlay[data-position="top-right"]     { top: 10vh;    right: 2vw; }
+.slidesync-qr-overlay[data-position="bottom-left"]   { bottom: 10vh; left: 2vw;  }
+.slidesync-qr-overlay[data-position="bottom-right"]  { bottom: 10vh; right: 2vw; }
 
 .slidesync-qr-overlay .slidesync-qr-canvas {
   display: flex;
