@@ -291,13 +291,14 @@
       // because contrast is automatic.
       // High error correction → denser matrix (33×33 for ~36-char URL),
       // visually finer / less heavy than M-level (29×29).
-      // Buffer of 148 = 37 (module count for our URL at H correction) × 4.
-      // Integer module size in the buffer → no fractional fillRect positions
-      // → no adjacent-module overlap → matches the patcher's cell math.
+      // Buffer of 111 = 37 (module count for our URL at H correction) × 3.
+      // Integer module pitch is REQUIRED for the difference-blend
+      // cancellation to be exact (any fractional pitch introduces
+      // sub-pixel anti-aliasing that doesn't cancel cleanly).
       const qrcode = new QRCode(canvas, {
         text: sessionUrl,
-        width: 148,
-        height: 148,
+        width: 111,
+        height: 111,
         colorDark: "#ffffff",
         colorLight: "rgba(0,0,0,0)",
         correctLevel: QRCode.CorrectLevel.H,
