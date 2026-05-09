@@ -54,10 +54,11 @@ async function handleCaptureSlide(message, sender) {
   const imageData = await new Promise((resolve) => {
     chrome.tabs.captureVisibleTab(
       sender.tab.windowId,
-      // Quality bumped to 90 so JPEG DCT ringing around the high-contrast
-      // QR module edges stays small enough that the inversion math doesn't
-      // leak a visible ghost into the patched frame.
-      { format: "jpeg", quality: 90 },
+      // PNG, lossless. JPEG quantization noise around the QR's high-contrast
+      // module edges was leaving a visible ghost after the inversion math —
+      // PNG eliminates that variable entirely. Frames are bigger but
+      // PartyKit handles them fine.
+      { format: "png" },
       (data) => {
         if (chrome.runtime.lastError) {
           console.warn("[slidesync] Capture error:", chrome.runtime.lastError.message);
@@ -110,11 +111,23 @@ async function patchQRArea(jpegDataUrl, qrRect) {
     console.warn("[slidesync] patch skipped: no matrix in qrRect", qrRect);
     return jpegDataUrl;
   }
+  // Sanity-count: how many cells in the matrix are actually marked dark.
+  // If this is 0 the matrix shipped fine but is the wrong format string
+  // (e.g. all "0"s, or chars other than "1"); if it's tiny vs N*N something
+  // is off in the lib's _oQRCode. Typical QR is ~40-50% dark.
+  let darkCount = 0;
+  for (let r = 0; r < qrRect.matrix.length; r++) {
+    const row = qrRect.matrix[r];
+    for (let c = 0; c < row.length; c++) {
+      if (row.charCodeAt(c) === 49) darkCount++;
+    }
+  }
   console.log(
     "[slidesync] Patching QR area",
     `pos=(${qrRect.x.toFixed(3)},${qrRect.y.toFixed(3)})`,
     `size=(${qrRect.width.toFixed(3)},${qrRect.height.toFixed(3)})`,
     `matrix=${qrRect.matrix.length}x${qrRect.matrix.length}`,
+    `dark=${darkCount}/${qrRect.matrix.length * qrRect.matrix.length}`,
   );
 
   const blob = await fetch(jpegDataUrl).then((r) => r.blob());
@@ -172,7 +185,9 @@ async function patchQRArea(jpegDataUrl, qrRect) {
 }
 
 async function canvasToDataUrl(canvas) {
-  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.9 });
+  // PNG (lossless) so the patched corner doesn't pick up a JPEG ringing halo
+  // around the dark/light module boundaries on the way out.
+  const blob = await canvas.convertToBlob({ type: "image/png" });
   return await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(reader.error);

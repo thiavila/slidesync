@@ -353,6 +353,16 @@
       if (!qrMatrix) {
         console.warn("[slidesync] qrMatrix is null — capture frames will keep the QR visible");
       }
+      // Diagnostic: confirm the rendered overlay is at the size we expect
+      // (148px CSS) so the patcher's matrix→pixel math lines up.
+      const ovRect = overlay.getBoundingClientRect();
+      const innerCanvas = canvas.querySelector("canvas");
+      console.log(
+        "[slidesync] QR rendered",
+        `overlay=${ovRect.width.toFixed(1)}x${ovRect.height.toFixed(1)} CSS px`,
+        `canvas-buffer=${innerCanvas ? innerCanvas.width + "x" + innerCanvas.height : "n/a"}`,
+        `dpr=${window.devicePixelRatio}`,
+      );
     }
 
     function startSession() {
