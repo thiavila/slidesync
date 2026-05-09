@@ -24,7 +24,7 @@
     let lastSlide = null;
     let hideTimeout = null;
     let qrEnabled = false;
-    let qrPosition = "bottom-right";
+    let qrPosition = "top-right";
     let activeRoomCode = null;
 
     function getSlideNumber() {
@@ -151,7 +151,7 @@
                 <button type="button" class="slidesync-seg" data-value="off">${msg("qrColorOff")}</button>
                 <button type="button" class="slidesync-seg" data-value="on">${msg("qrCodeOn")}</button>
               </div>
-              <div class="slidesync-segmented positions" data-count="4" data-active-index="3" id="slidesync-qr-position-group">
+              <div class="slidesync-segmented positions" data-count="4" data-active-index="1" id="slidesync-qr-position-group">
                 <button type="button" class="slidesync-seg" data-value="top-left" title="${msg("qrPositionTopLeft")}" aria-label="${msg("qrPositionTopLeft")}">
                   <span class="slidesync-pos-icon"><span class="slidesync-dot-tl"></span></span>
                 </button>
@@ -177,7 +177,7 @@
                 ${msg("inspiredBy")} <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
                 by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
               </div>
-              <div class="slidesync-version">slidesync v2.7</div>
+              <div class="slidesync-version">slidesync v2.3</div>
             </div>
           </div>
         </div>
@@ -233,7 +233,7 @@
       overlay.className = "slidesync-qr-overlay";
       overlay.id = "slidesync-qr-overlay";
       overlay.setAttribute("data-color", "off");
-      overlay.setAttribute("data-position", "bottom-right");
+      overlay.setAttribute("data-position", "top-right");
       overlay.innerHTML = `<div class="slidesync-qr-canvas" id="slidesync-qr-canvas"></div>`;
       document.body.appendChild(overlay);
     }
@@ -483,7 +483,7 @@
       ["roomCode", "isActive", "qrEnabled", "qrPosition"],
       (result) => {
         qrEnabled = !!result.qrEnabled;
-        qrPosition = result.qrPosition || "bottom-right";
+        qrPosition = result.qrPosition || "top-right";
 
         if (result.isActive && result.roomCode) {
           activeRoomCode = result.roomCode;
@@ -504,7 +504,7 @@
       let needsRender = false;
       let settingsChanged = false;
       if (changes.qrEnabled) { qrEnabled = !!changes.qrEnabled.newValue; needsRender = true; settingsChanged = true; }
-      if (changes.qrPosition) { qrPosition = changes.qrPosition.newValue || "bottom-right"; needsRender = true; settingsChanged = true; }
+      if (changes.qrPosition) { qrPosition = changes.qrPosition.newValue || "top-right"; needsRender = true; settingsChanged = true; }
       if (changes.roomCode) { activeRoomCode = changes.roomCode.newValue || null; needsRender = true; }
       if (changes.isActive && !changes.isActive.newValue) { activeRoomCode = null; needsRender = true; }
       if (settingsChanged) syncDrawerSettings();
