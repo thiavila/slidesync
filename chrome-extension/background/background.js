@@ -74,6 +74,8 @@ async function handleCaptureSlide(message, sender) {
     } catch (e) {
       console.warn("[slidesync] QR patch failed, sending raw frame:", e);
     }
+  } else {
+    console.log("[slidesync] capture-slide: no qrRect, sending raw frame");
   }
 
   if (ws && ws.readyState === WebSocket.OPEN) {
@@ -101,7 +103,16 @@ async function handleCaptureSlide(message, sender) {
 // untouched. Result: clean slide with the QR mathematically removed,
 // no edge-stretch smudge, no color-fill artifacts.
 async function patchQRArea(jpegDataUrl, qrRect) {
-  if (!qrRect.matrix || !qrRect.matrix.length) return jpegDataUrl;
+  if (!qrRect.matrix || !qrRect.matrix.length) {
+    console.warn("[slidesync] patch skipped: no matrix in qrRect", qrRect);
+    return jpegDataUrl;
+  }
+  console.log(
+    "[slidesync] Patching QR area",
+    `pos=(${qrRect.x.toFixed(3)},${qrRect.y.toFixed(3)})`,
+    `size=(${qrRect.width.toFixed(3)},${qrRect.height.toFixed(3)})`,
+    `matrix=${qrRect.matrix.length}x${qrRect.matrix.length}`,
+  );
 
   const blob = await fetch(jpegDataUrl).then((r) => r.blob());
   const bitmap = await createImageBitmap(blob);

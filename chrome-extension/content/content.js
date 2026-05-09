@@ -254,21 +254,62 @@
       });
     }
 
-    // Extract the QR module matrix from the lib's internal model so the
-    // background script can map "this captured pixel is at a dark module"
-    // and reverse the difference blend.
-    function extractMatrix(qrInstance) {
-      const model = qrInstance && qrInstance._oQRCode;
-      if (!model || typeof model.getModuleCount !== "function") return null;
-      const n = model.getModuleCount();
+    // Extract the QR module matrix so the background script can map
+    // "this captured pixel sits inside a dark module" and reverse the
+    // difference blend. Primary path: read the lib's internal model
+    // (qrInstance._oQRCode). Fallback: sample the rendered canvas pixels.
+    function extractMatrix(qrInstance, container) {
+      try {
+        const model = qrInstance && qrInstance._oQRCode;
+        if (model) {
+          const n = (typeof model.getModuleCount === "function")
+            ? model.getModuleCount()
+            : model.moduleCount;
+          if (typeof n === "number" && n > 0 && typeof model.isDark === "function") {
+            const rows = [];
+            for (let r = 0; r < n; r++) {
+              let row = "";
+              for (let c = 0; c < n; c++) {
+                row += model.isDark(r, c) ? "1" : "0";
+              }
+              rows.push(row);
+            }
+            console.log("[slidesync] QR matrix extracted via _oQRCode:", n + "x" + n);
+            return rows;
+          }
+        }
+      } catch (e) {
+        console.warn("[slidesync] _oQRCode extraction failed:", e);
+      }
+      // Fallback: sample the rendered canvas. Works regardless of lib
+      // internal structure as long as the lib drew a canvas.
+      const cv = container && container.querySelector("canvas");
+      if (!cv) {
+        console.warn("[slidesync] QR matrix unavailable (no canvas to sample)");
+        return null;
+      }
+      // For URL like https://slidesync.live/session/123456 (~36 chars) at
+      // H correction the matrix is 33x33. Hardcode for our case; if the URL
+      // length changes substantially the QR version + this constant must
+      // be revisited.
+      const N = 33;
+      const ctx = cv.getContext("2d");
+      const cellW = cv.width / N;
+      const cellH = cv.height / N;
       const rows = [];
-      for (let r = 0; r < n; r++) {
+      for (let r = 0; r < N; r++) {
         let row = "";
-        for (let c = 0; c < n; c++) {
-          row += model.isDark(r, c) ? "1" : "0";
+        for (let c = 0; c < N; c++) {
+          const sx = Math.floor(c * cellW + cellW / 2);
+          const sy = Math.floor(r * cellH + cellH / 2);
+          const data = ctx.getImageData(sx, sy, 1, 1).data;
+          // colorDark="#ffffff" + opaque, colorLight=transparent → alpha
+          // is the most reliable signal of "is this a dark module pixel".
+          row += data[3] > 128 ? "1" : "0";
         }
         rows.push(row);
       }
+      console.log("[slidesync] QR matrix extracted via canvas sampling:", N + "x" + N);
       return rows;
     }
 
@@ -305,7 +346,10 @@
         colorLight: "rgba(0,0,0,0)",
         correctLevel: QRCode.CorrectLevel.H,
       });
-      qrMatrix = extractMatrix(qrcode);
+      qrMatrix = extractMatrix(qrcode, canvas);
+      if (!qrMatrix) {
+        console.warn("[slidesync] qrMatrix is null — capture frames will keep the QR visible");
+      }
     }
 
     function startSession() {
