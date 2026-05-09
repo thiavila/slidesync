@@ -148,12 +148,21 @@ async function patchQRArea(pngDataUrl, qrRect) {
   // pixel under the overlay became |slide - qr|. Drawing the same QR mask
   // back with the same op gives ||slide - qr| - qr|, which equals the
   // original `slide` whenever qr is 0 (transparent → no-op) or 255 (white
-  // module → exact recovery). Our QR uses only those two values, so this
-  // recovers the slide pixel-for-pixel — no cell math, no DPR juggling, no
-  // sub-pixel alignment to fight.
+  // module → exact recovery). The identity ONLY holds for those two
+  // values — anti-aliased edges with intermediate values (e.g., 178)
+  // don't cancel and leave a faint module outline.
+  //
+  // Both sides have to agree on nearest-neighbor scaling for this to work
+  // pixel-exact. The on-screen overlay uses `image-rendering: pixelated`
+  // which forces nearest-neighbor when CSS scales 148 CSS px → ~296
+  // device px. Here we mirror that: smoothing OFF so the mask scales the
+  // same way when we draw it back at the captured frame's device pixel
+  // dimensions.
+  ctx.imageSmoothingEnabled = false;
   ctx.globalCompositeOperation = "difference";
   ctx.drawImage(maskBitmap, x, y, w, h);
   ctx.globalCompositeOperation = "source-over";
+  ctx.imageSmoothingEnabled = true;
   maskBitmap.close();
 
   return await canvasToDataUrl(canvas);
