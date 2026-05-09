@@ -19,6 +19,7 @@
   "qrCodeLabel": { "message": "QR कोड" },
   "qrColorOff": { "message": "बंद" },
   "qrCodeOn": { "message": "चालू" },
+  "qrWarning": { "message": "स्लाइड्स पर हल्का सा निशान छोड़ सकता है।" },
   "qrColorBlack": { "message": "काला" },
   "qrColorWhite": { "message": "सफेद" },
   "qrPositionLabel": { "message": "स्थान" },

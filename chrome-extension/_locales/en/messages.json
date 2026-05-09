@@ -19,6 +19,7 @@
   "qrCodeLabel": { "message": "QR code" },
   "qrColorOff": { "message": "Off" },
   "qrCodeOn": { "message": "On" },
+  "qrWarning": { "message": "May leave a faint mark on slides." },
   "qrColorBlack": { "message": "Black" },
   "qrColorWhite": { "message": "White" },
   "qrPositionLabel": { "message": "Position" },

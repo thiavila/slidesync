@@ -139,40 +139,33 @@
             <button primary id="slidesync-start">${msg("startSession")}</button>
             <button class="danger" id="slidesync-stop" style="display:none;">${msg("stopSession")}</button>
 
-            <div class="slidesync-settings" data-expanded="false" id="slidesync-settings">
-              <button type="button" class="slidesync-settings-header" id="slidesync-settings-toggle" aria-expanded="false">
-                <span>${msg("qrCodeLabel")}</span>
-                <svg class="slidesync-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">
-                  <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
-              <div class="slidesync-settings-body">
-                <div class="slidesync-settings-body-inner">
-                  <div class="slidesync-setting-row">
-                    <div class="slidesync-segmented" id="slidesync-qr-enabled-group">
-                      <button type="button" class="slidesync-seg" data-value="off">${msg("qrColorOff")}</button>
-                      <button type="button" class="slidesync-seg" data-value="on">${msg("qrCodeOn")}</button>
-                    </div>
-                  </div>
-                  <div class="slidesync-setting-row">
-                    <div class="slidesync-setting-label">${msg("qrPositionLabel")}</div>
-                    <div class="slidesync-segmented positions" id="slidesync-qr-position-group">
-                      <button type="button" class="slidesync-seg" data-value="top-left" title="${msg("qrPositionTopLeft")}" aria-label="${msg("qrPositionTopLeft")}">
-                        <span class="slidesync-pos-icon"><span class="slidesync-dot-tl"></span></span>
-                      </button>
-                      <button type="button" class="slidesync-seg" data-value="top-right" title="${msg("qrPositionTopRight")}" aria-label="${msg("qrPositionTopRight")}">
-                        <span class="slidesync-pos-icon"><span class="slidesync-dot-tr"></span></span>
-                      </button>
-                      <button type="button" class="slidesync-seg" data-value="bottom-left" title="${msg("qrPositionBottomLeft")}" aria-label="${msg("qrPositionBottomLeft")}">
-                        <span class="slidesync-pos-icon"><span class="slidesync-dot-bl"></span></span>
-                      </button>
-                      <button type="button" class="slidesync-seg" data-value="bottom-right" title="${msg("qrPositionBottomRight")}" aria-label="${msg("qrPositionBottomRight")}">
-                        <span class="slidesync-pos-icon"><span class="slidesync-dot-br"></span></span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+            <div id="slidesync-qr-section" style="display:none;">
+              <div class="slidesync-hr"></div>
+              <div class="slidesync-qr-container" id="slidesync-qr"></div>
+              <div class="slidesync-url" id="slidesync-url"></div>
+            </div>
+
+            <div class="slidesync-settings" id="slidesync-settings">
+              <div class="slidesync-setting-label">${msg("qrCodeLabel")}</div>
+              <div class="slidesync-segmented" data-count="2" data-active-index="0" id="slidesync-qr-enabled-group">
+                <button type="button" class="slidesync-seg" data-value="off">${msg("qrColorOff")}</button>
+                <button type="button" class="slidesync-seg" data-value="on">${msg("qrCodeOn")}</button>
               </div>
+              <div class="slidesync-segmented positions" data-count="4" data-active-index="3" id="slidesync-qr-position-group">
+                <button type="button" class="slidesync-seg" data-value="top-left" title="${msg("qrPositionTopLeft")}" aria-label="${msg("qrPositionTopLeft")}">
+                  <span class="slidesync-pos-icon"><span class="slidesync-dot-tl"></span></span>
+                </button>
+                <button type="button" class="slidesync-seg" data-value="top-right" title="${msg("qrPositionTopRight")}" aria-label="${msg("qrPositionTopRight")}">
+                  <span class="slidesync-pos-icon"><span class="slidesync-dot-tr"></span></span>
+                </button>
+                <button type="button" class="slidesync-seg" data-value="bottom-left" title="${msg("qrPositionBottomLeft")}" aria-label="${msg("qrPositionBottomLeft")}">
+                  <span class="slidesync-pos-icon"><span class="slidesync-dot-bl"></span></span>
+                </button>
+                <button type="button" class="slidesync-seg" data-value="bottom-right" title="${msg("qrPositionBottomRight")}" aria-label="${msg("qrPositionBottomRight")}">
+                  <span class="slidesync-pos-icon"><span class="slidesync-dot-br"></span></span>
+                </button>
+              </div>
+              <div class="slidesync-qr-warning" id="slidesync-qr-warning">${msg("qrWarning")}</div>
             </div>
 
             <div class="slidesync-footer">
@@ -184,7 +177,7 @@
                 ${msg("inspiredBy")} <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
                 by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
               </div>
-              <div class="slidesync-version">slidesync v2.6</div>
+              <div class="slidesync-version">slidesync v2.7</div>
             </div>
           </div>
         </div>
@@ -218,15 +211,7 @@
       document.getElementById("slidesync-start").addEventListener("click", startSession);
       document.getElementById("slidesync-stop").addEventListener("click", stopSession);
 
-      const settings = document.getElementById("slidesync-settings");
-      const settingsToggle = document.getElementById("slidesync-settings-toggle");
-      settingsToggle.addEventListener("click", () => {
-        const expanded = settings.getAttribute("data-expanded") === "true";
-        settings.setAttribute("data-expanded", expanded ? "false" : "true");
-        settingsToggle.setAttribute("aria-expanded", expanded ? "false" : "true");
-      });
-
-      document.querySelectorAll("#slidesync-qr-enabled-group .slidesync-seg").forEach((b) => {
+      document.querySelectorAll("#slidesync-qr-enabled-group .slidesync-seg").forEach((b, i) => {
         b.addEventListener("click", () => {
           chrome.storage.local.set({ qrEnabled: b.dataset.value === "on" });
         });
@@ -259,12 +244,31 @@
 
     function syncDrawerSettings() {
       const enabledValue = qrEnabled ? "on" : "off";
-      document.querySelectorAll("#slidesync-qr-enabled-group .slidesync-seg").forEach((b) => {
-        b.classList.toggle("active", b.dataset.value === enabledValue);
-      });
-      document.querySelectorAll("#slidesync-qr-position-group .slidesync-seg").forEach((b) => {
-        b.classList.toggle("active", b.dataset.value === qrPosition);
-      });
+      const enabledGroup = document.getElementById("slidesync-qr-enabled-group");
+      if (enabledGroup) {
+        let idx = 0;
+        enabledGroup.querySelectorAll(".slidesync-seg").forEach((b, i) => {
+          const isActive = b.dataset.value === enabledValue;
+          b.classList.toggle("active", isActive);
+          if (isActive) idx = i;
+        });
+        enabledGroup.setAttribute("data-active-index", String(idx));
+      }
+      const posGroup = document.getElementById("slidesync-qr-position-group");
+      if (posGroup) {
+        let idx = 0;
+        posGroup.querySelectorAll(".slidesync-seg").forEach((b, i) => {
+          const isActive = b.dataset.value === qrPosition;
+          b.classList.toggle("active", isActive);
+          if (isActive) idx = i;
+        });
+        posGroup.setAttribute("data-active-index", String(idx));
+      }
+      // Show the small "may leave a faint mark" warning only while the
+      // overlay is on. It's an inline note, not a toast — persistent
+      // while On so the user always knows what to expect.
+      const warning = document.getElementById("slidesync-qr-warning");
+      if (warning) warning.style.display = qrEnabled ? "block" : "none";
     }
 
     function renderOverlayQR() {
@@ -408,6 +412,7 @@
       document.getElementById("slidesync-stop").style.display = "block";
 
       activeRoomCode = roomCode;
+      showDrawerQRCode(roomCode);
       renderOverlayQR();
     }
 
@@ -422,7 +427,40 @@
       document.getElementById("slidesync-stop").style.display = "none";
 
       activeRoomCode = null;
+      hideDrawerQRCode();
       renderOverlayQR();
+    }
+
+    // Drawer-internal QR (visible to the presenter when the drawer is
+    // open). This is a regular black-on-white QR — only the overlay
+    // version uses the difference-blend trick, because the drawer is
+    // typically off-screen during captures (translateX'd off-tab) and
+    // its short open windows don't matter for the captured stream.
+    function showDrawerQRCode(roomCode) {
+      const sessionUrl = `${WEBAPP_URL}/session/${roomCode}`;
+      const qrSection = document.getElementById("slidesync-qr-section");
+      const qrContainer = document.getElementById("slidesync-qr");
+      const urlEl = document.getElementById("slidesync-url");
+      if (!qrSection || !qrContainer || !urlEl) return;
+
+      qrContainer.innerHTML = "";
+      new QRCode(qrContainer, {
+        text: sessionUrl,
+        width: 200,
+        height: 200,
+        colorDark: "#333333",
+        colorLight: "rgba(0,0,0,0)",
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+      urlEl.textContent = sessionUrl;
+      qrSection.style.display = "block";
+    }
+
+    function hideDrawerQRCode() {
+      const qrSection = document.getElementById("slidesync-qr-section");
+      const qrContainer = document.getElementById("slidesync-qr");
+      if (qrSection) qrSection.style.display = "none";
+      if (qrContainer) qrContainer.innerHTML = "";
     }
 
     window.addEventListener("hashchange", debouncedCheckSlide);
@@ -454,6 +492,7 @@
           document.getElementById("slidesync-status").textContent = msg("statusActive");
           document.getElementById("slidesync-start").style.display = "none";
           document.getElementById("slidesync-stop").style.display = "block";
+          showDrawerQRCode(result.roomCode);
         }
         syncDrawerSettings();
         renderOverlayQR();

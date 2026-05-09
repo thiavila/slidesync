@@ -19,6 +19,7 @@
   "qrCodeLabel": { "message": "二维码" },
   "qrColorOff": { "message": "关闭" },
   "qrCodeOn": { "message": "开启" },
+  "qrWarning": { "message": "可能会在幻灯片上留下淡淡的痕迹。" },
   "qrColorBlack": { "message": "黑色" },
   "qrColorWhite": { "message": "白色" },
   "qrPositionLabel": { "message": "位置" },

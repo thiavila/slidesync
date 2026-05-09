@@ -19,6 +19,7 @@
   "qrCodeLabel": { "message": "QRコード" },
   "qrColorOff": { "message": "オフ" },
   "qrCodeOn": { "message": "オン" },
+  "qrWarning": { "message": "スライドにわずかな跡が残ることがあります。" },
   "qrColorBlack": { "message": "黒" },
   "qrColorWhite": { "message": "白" },
   "qrPositionLabel": { "message": "位置" },

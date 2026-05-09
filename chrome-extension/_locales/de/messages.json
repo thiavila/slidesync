@@ -19,6 +19,7 @@
   "qrCodeLabel": { "message": "QR-Code" },
   "qrColorOff": { "message": "Aus" },
   "qrCodeOn": { "message": "Aktiv" },
+  "qrWarning": { "message": "Kann eine leichte Spur auf den Folien hinterlassen." },
   "qrColorBlack": { "message": "Schwarz" },
   "qrColorWhite": { "message": "Weiß" },
   "qrPositionLabel": { "message": "Position" },

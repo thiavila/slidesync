@@ -19,6 +19,7 @@
   "qrCodeLabel": { "message": "Código QR" },
   "qrColorOff": { "message": "Apagado" },
   "qrCodeOn": { "message": "Activo" },
+  "qrWarning": { "message": "Puede dejar una leve marca en las diapositivas." },
   "qrColorBlack": { "message": "Negro" },
   "qrColorWhite": { "message": "Blanco" },
   "qrPositionLabel": { "message": "Posición" },
