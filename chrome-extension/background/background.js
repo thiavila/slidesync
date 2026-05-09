@@ -106,81 +106,56 @@ async function handleCaptureSlide(message, sender) {
 // (255 - captured) = original slide pixel. Light modules pass through
 // untouched. Result: clean slide with the QR mathematically removed,
 // no edge-stretch smudge, no color-fill artifacts.
-async function patchQRArea(jpegDataUrl, qrRect) {
-  if (!qrRect.matrix || !qrRect.matrix.length) {
-    console.warn("[slidesync] patch skipped: no matrix in qrRect", qrRect);
-    return jpegDataUrl;
+async function patchQRArea(pngDataUrl, qrRect) {
+  if (!qrRect.mask) {
+    console.warn("[slidesync] patch skipped: no mask in qrRect");
+    return pngDataUrl;
   }
-  // Sanity-count: how many cells in the matrix are actually marked dark.
-  // If this is 0 the matrix shipped fine but is the wrong format string
-  // (e.g. all "0"s, or chars other than "1"); if it's tiny vs N*N something
-  // is off in the lib's _oQRCode. Typical QR is ~40-50% dark.
-  let darkCount = 0;
-  for (let r = 0; r < qrRect.matrix.length; r++) {
-    const row = qrRect.matrix[r];
-    for (let c = 0; c < row.length; c++) {
-      if (row.charCodeAt(c) === 49) darkCount++;
-    }
-  }
-  console.log(
-    "[slidesync] Patching QR area",
-    `pos=(${qrRect.x.toFixed(3)},${qrRect.y.toFixed(3)})`,
-    `size=(${qrRect.width.toFixed(3)},${qrRect.height.toFixed(3)})`,
-    `matrix=${qrRect.matrix.length}x${qrRect.matrix.length}`,
-    `dark=${darkCount}/${qrRect.matrix.length * qrRect.matrix.length}`,
-  );
 
-  const blob = await fetch(jpegDataUrl).then((r) => r.blob());
-  const bitmap = await createImageBitmap(blob);
-  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  const [frameBlob, maskBlob] = await Promise.all([
+    fetch(pngDataUrl).then((r) => r.blob()),
+    fetch(qrRect.mask).then((r) => r.blob()),
+  ]);
+  const [frameBitmap, maskBitmap] = await Promise.all([
+    createImageBitmap(frameBlob),
+    createImageBitmap(maskBlob),
+  ]);
+
+  const canvas = new OffscreenCanvas(frameBitmap.width, frameBitmap.height);
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(bitmap, 0, 0);
-  bitmap.close();
+  ctx.drawImage(frameBitmap, 0, 0);
+  frameBitmap.close();
 
   const W = canvas.width;
   const H = canvas.height;
 
-  const x = Math.max(0, Math.floor(qrRect.x * W));
-  const y = Math.max(0, Math.floor(qrRect.y * H));
-  const w = Math.min(W - x, Math.ceil(qrRect.width * W));
-  const h = Math.min(H - y, Math.ceil(qrRect.height * H));
-  if (w <= 0 || h <= 0) return await canvasToDataUrl(canvas);
+  // Map normalized rect to bitmap pixels. The captured frame's dimensions
+  // are the viewport scaled by DPR, so the same fractions that describe
+  // the overlay in the CSS viewport describe it in the captured bitmap.
+  const x = qrRect.x * W;
+  const y = qrRect.y * H;
+  const w = qrRect.width * W;
+  const h = qrRect.height * H;
 
-  const matrix = qrRect.matrix;
-  const N = matrix.length;
-  if (N === 0) return await canvasToDataUrl(canvas);
+  console.log(
+    "[slidesync] Patching QR area",
+    `dst=(${x.toFixed(1)},${y.toFixed(1)},${w.toFixed(1)},${h.toFixed(1)})`,
+    `mask=${maskBitmap.width}x${maskBitmap.height}`,
+    `frame=${W}x${H}`,
+  );
 
-  const cellW = w / N;
-  const cellH = h / N;
+  // The QR was drawn on screen via CSS mix-blend-mode: difference, so each
+  // pixel under the overlay became |slide - qr|. Drawing the same QR mask
+  // back with the same op gives ||slide - qr| - qr|, which equals the
+  // original `slide` whenever qr is 0 (transparent → no-op) or 255 (white
+  // module → exact recovery). Our QR uses only those two values, so this
+  // recovers the slide pixel-for-pixel — no cell math, no DPR juggling, no
+  // sub-pixel alignment to fight.
+  ctx.globalCompositeOperation = "difference";
+  ctx.drawImage(maskBitmap, x, y, w, h);
+  ctx.globalCompositeOperation = "source-over";
+  maskBitmap.close();
 
-  // Pre-compute per-row "is dark" lookup as Uint8Array for tight inner loop
-  const dark = new Uint8Array(N * N);
-  for (let r = 0; r < N; r++) {
-    const row = matrix[r];
-    for (let c = 0; c < N && c < row.length; c++) {
-      if (row.charCodeAt(c) === 49 /* "1" */) dark[r * N + c] = 1;
-    }
-  }
-
-  const imageData = ctx.getImageData(x, y, w, h);
-  const data = imageData.data;
-
-  for (let py = 0; py < h; py++) {
-    const cellR = Math.min(N - 1, Math.floor(py / cellH));
-    const rowBase = cellR * N;
-    for (let px = 0; px < w; px++) {
-      const cellC = Math.min(N - 1, Math.floor(px / cellW));
-      if (dark[rowBase + cellC]) {
-        const i = (py * w + px) * 4;
-        data[i]     = 255 - data[i];
-        data[i + 1] = 255 - data[i + 1];
-        data[i + 2] = 255 - data[i + 2];
-        // alpha untouched
-      }
-    }
-  }
-
-  ctx.putImageData(imageData, x, y);
   return await canvasToDataUrl(canvas);
 }
 

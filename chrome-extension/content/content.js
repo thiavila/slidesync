@@ -26,7 +26,6 @@
     let qrEnabled = false;
     let qrPosition = "bottom-right";
     let activeRoomCode = null;
-    let qrMatrix = null; // array of "0"/"1" strings, one per row
 
     function getSlideNumber() {
       const counter = document.querySelector(".goog-flat-menu-button-caption") ||
@@ -49,7 +48,7 @@
     // background script can map it onto the captured image (which has its
     // own DPR-scaled dimensions) without us having to send any pixel math.
     function getQRRect() {
-      if (!qrEnabled || !activeRoomCode || !qrMatrix) return null;
+      if (!qrEnabled || !activeRoomCode) return null;
       const overlay = document.getElementById("slidesync-qr-overlay");
       if (!overlay) return null;
       const r = overlay.getBoundingClientRect();
@@ -57,12 +56,26 @@
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       if (vw === 0 || vh === 0) return null;
+      // Grab the actual rendered canvas pixels of the QR. This is what the
+      // browser composited onto the slide via mix-blend-mode: difference.
+      // Drawing the same image back over the captured frame with the same
+      // difference op cancels the blend — pixel-perfect, no matrix math,
+      // no cell alignment, no DPR juggling.
+      const cv = overlay.querySelector("canvas");
+      let maskDataUrl = null;
+      if (cv) {
+        try {
+          maskDataUrl = cv.toDataURL("image/png");
+        } catch (e) {
+          console.warn("[slidesync] toDataURL failed:", e);
+        }
+      }
       return {
         x: r.left / vw,
         y: r.top / vh,
         width: r.width / vw,
         height: r.height / vh,
-        matrix: qrMatrix,
+        mask: maskDataUrl,
       };
     }
 
@@ -254,65 +267,6 @@
       });
     }
 
-    // Extract the QR module matrix so the background script can map
-    // "this captured pixel sits inside a dark module" and reverse the
-    // difference blend. Primary path: read the lib's internal model
-    // (qrInstance._oQRCode). Fallback: sample the rendered canvas pixels.
-    function extractMatrix(qrInstance, container) {
-      try {
-        const model = qrInstance && qrInstance._oQRCode;
-        if (model) {
-          const n = (typeof model.getModuleCount === "function")
-            ? model.getModuleCount()
-            : model.moduleCount;
-          if (typeof n === "number" && n > 0 && typeof model.isDark === "function") {
-            const rows = [];
-            for (let r = 0; r < n; r++) {
-              let row = "";
-              for (let c = 0; c < n; c++) {
-                row += model.isDark(r, c) ? "1" : "0";
-              }
-              rows.push(row);
-            }
-            console.log("[slidesync] QR matrix extracted via _oQRCode:", n + "x" + n);
-            return rows;
-          }
-        }
-      } catch (e) {
-        console.warn("[slidesync] _oQRCode extraction failed:", e);
-      }
-      // Fallback: sample the rendered canvas. Works regardless of lib
-      // internal structure as long as the lib drew a canvas.
-      const cv = container && container.querySelector("canvas");
-      if (!cv) {
-        console.warn("[slidesync] QR matrix unavailable (no canvas to sample)");
-        return null;
-      }
-      // For URL like https://slidesync.live/session/123456 (~36 chars) at
-      // H correction the matrix is 33x33. Hardcode for our case; if the URL
-      // length changes substantially the QR version + this constant must
-      // be revisited.
-      const N = 33;
-      const ctx = cv.getContext("2d");
-      const cellW = cv.width / N;
-      const cellH = cv.height / N;
-      const rows = [];
-      for (let r = 0; r < N; r++) {
-        let row = "";
-        for (let c = 0; c < N; c++) {
-          const sx = Math.floor(c * cellW + cellW / 2);
-          const sy = Math.floor(r * cellH + cellH / 2);
-          const data = ctx.getImageData(sx, sy, 1, 1).data;
-          // colorDark="#ffffff" + opaque, colorLight=transparent → alpha
-          // is the most reliable signal of "is this a dark module pixel".
-          row += data[3] > 128 ? "1" : "0";
-        }
-        rows.push(row);
-      }
-      console.log("[slidesync] QR matrix extracted via canvas sampling:", N + "x" + N);
-      return rows;
-    }
-
     function renderOverlayQR() {
       const overlay = document.getElementById("slidesync-qr-overlay");
       if (!overlay) return;
@@ -324,7 +278,6 @@
       if (!activeRoomCode || !qrEnabled) {
         overlay.setAttribute("data-active", "false");
         canvas.innerHTML = "";
-        qrMatrix = null;
         return;
       }
       overlay.setAttribute("data-active", "true");
@@ -349,12 +302,6 @@
         colorLight: "rgba(0,0,0,0)",
         correctLevel: QRCode.CorrectLevel.H,
       });
-      qrMatrix = extractMatrix(qrcode, canvas);
-      if (!qrMatrix) {
-        console.warn("[slidesync] qrMatrix is null — capture frames will keep the QR visible");
-      }
-      // Diagnostic: confirm the rendered overlay is at the size we expect
-      // (148px CSS) so the patcher's matrix→pixel math lines up.
       const ovRect = overlay.getBoundingClientRect();
       const innerCanvas = canvas.querySelector("canvas");
       console.log(
@@ -363,6 +310,8 @@
         `canvas-buffer=${innerCanvas ? innerCanvas.width + "x" + innerCanvas.height : "n/a"}`,
         `dpr=${window.devicePixelRatio}`,
       );
+      // Suppress unused-warning lint: qrcode is used via the canvas it inserts.
+      void qrcode;
     }
 
     function startSession() {
