@@ -15,5 +15,16 @@
   "presentButtonAria": { "message": "Présenter avec slidesync" },
   "inspiredBy": { "message": "Inspiré par" },
   "sponsorMessage": { "message": "Faire tourner slidesync coûte environ 10 $$/mois. Si cet outil vous a été utile dans vos présentations, une petite contribution fait toute la différence." },
-  "sponsorCta": { "message": "Devenir sponsor" }
+  "sponsorCta": { "message": "Devenir sponsor" },
+  "qrCodeLabel": { "message": "Code QR" },
+  "qrColorOff": { "message": "Désactivé" },
+  "qrCodeOn": { "message": "Actif" },
+  "qrWarning": { "message": "Peut laisser une légère trace sur les diapositives." },
+  "qrColorBlack": { "message": "Noir" },
+  "qrColorWhite": { "message": "Blanc" },
+  "qrPositionLabel": { "message": "Position" },
+  "qrPositionTopLeft": { "message": "Haut gauche" },
+  "qrPositionTopRight": { "message": "Haut droite" },
+  "qrPositionBottomLeft": { "message": "Bas gauche" },
+  "qrPositionBottomRight": { "message": "Bas droite" }
 }

@@ -211,33 +211,6 @@
   background-color: #d32f2f;
 }
 
-/* Divider */
-.slidesync-drawer .slidesync-hr {
-  height: 2px;
-  width: 100%;
-  background: rgba(0,0,0,0.1);
-  margin: 20px 0;
-}
-
-/* QR Code */
-.slidesync-drawer .slidesync-qr-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 12px;
-}
-
-.slidesync-drawer .slidesync-qr-container img {
-  border-radius: 8px;
-}
-
-.slidesync-drawer .slidesync-url {
-  text-align: center;
-  font-size: 11px;
-  color: #33AEFE;
-  word-break: break-all;
-  margin-bottom: 4px;
-}
-
 /* Footer */
 .slidesync-drawer .slidesync-footer {
   text-align: center;
@@ -280,4 +253,223 @@
 
 .slidesync-drawer .slidesync-sponsor a:hover {
   text-decoration: underline;
+}
+
+/* ===== Drawer QR section (room URL + scannable QR) ===== */
+.slidesync-drawer .slidesync-hr {
+  height: 1px;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.08);
+  margin: 16px 0;
+}
+
+.slidesync-drawer .slidesync-qr-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.slidesync-drawer .slidesync-qr-container canvas,
+.slidesync-drawer .slidesync-qr-container img {
+  display: block;
+  width: 200px !important;
+  height: 200px !important;
+  background: transparent;
+}
+
+.slidesync-drawer .slidesync-url {
+  text-align: center;
+  font-size: 11px;
+  color: #33AEFE;
+  word-break: break-all;
+  margin-bottom: 4px;
+}
+
+/* ===== Drawer settings (always visible — no dropdown) ===== */
+.slidesync-drawer .slidesync-settings {
+  width: 100%;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.slidesync-drawer .slidesync-setting-label {
+  font-size: 11px;
+  color: #888;
+  letter-spacing: 0.3px;
+  padding-left: 4px;
+}
+
+/* iOS-style pill segmented control with sliding thumb.
+   The active "pill" is rendered by ::before and slides via transform
+   keyed off data-active-index so each click animates from one option
+   to the next instead of popping into place. */
+.slidesync-drawer .slidesync-segmented {
+  position: relative;
+  display: flex;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 0;
+  border: none;
+  overflow: hidden;
+}
+
+.slidesync-drawer .slidesync-segmented::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--seg-count, 2));
+  background: #ffffff;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  transform: translateX(calc(var(--seg-active, 0) * 100%));
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0.16, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.slidesync-drawer .slidesync-segmented[data-count="2"] { --seg-count: 2; }
+.slidesync-drawer .slidesync-segmented[data-count="3"] { --seg-count: 3; }
+.slidesync-drawer .slidesync-segmented[data-count="4"] { --seg-count: 4; }
+.slidesync-drawer .slidesync-segmented[data-active-index="0"] { --seg-active: 0; }
+.slidesync-drawer .slidesync-segmented[data-active-index="1"] { --seg-active: 1; }
+.slidesync-drawer .slidesync-segmented[data-active-index="2"] { --seg-active: 2; }
+.slidesync-drawer .slidesync-segmented[data-active-index="3"] { --seg-active: 3; }
+
+.slidesync-drawer .slidesync-seg {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #666;
+  font: inherit;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 220ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  width: auto;
+  letter-spacing: normal;
+  opacity: 1;
+  box-shadow: none;
+}
+
+.slidesync-drawer .slidesync-seg:hover:not(.active) {
+  color: #333;
+}
+
+.slidesync-drawer .slidesync-seg.active {
+  background: transparent;
+  color: #222;
+  box-shadow: none;
+}
+
+.slidesync-drawer .slidesync-segmented.positions .slidesync-seg {
+  padding: 6px;
+}
+
+.slidesync-drawer .slidesync-qr-warning {
+  font-size: 11px;
+  color: #999;
+  font-style: italic;
+  line-height: 1.4;
+  text-align: center;
+  padding: 0 4px;
+  display: none;
+}
+
+.slidesync-drawer .slidesync-pos-icon {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border: 1.4px solid currentColor;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.slidesync-drawer .slidesync-pos-icon > span {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.slidesync-drawer .slidesync-pos-icon .slidesync-dot-tl { top: 2px; left: 2px; }
+.slidesync-drawer .slidesync-pos-icon .slidesync-dot-tr { top: 2px; right: 2px; }
+.slidesync-drawer .slidesync-pos-icon .slidesync-dot-bl { bottom: 2px; left: 2px; }
+.slidesync-drawer .slidesync-pos-icon .slidesync-dot-br { bottom: 2px; right: 2px; }
+
+/* ===== PRESENT MODE: Persistent QR overlay (transparent, just the squares) =====
+   The QR is in the slide's DOM. The background script paints it out of every
+   captureVisibleTab snapshot before sending to PartyKit by stretching the
+   adjacent slide pixels into the QR area, so the overlay never reaches
+   remote viewers — no flicker, no PiP. */
+.slidesync-qr-overlay {
+  position: fixed;
+  z-index: 99997;
+  /* Width is intentionally NOT fixed here — the inner canvas sizes itself
+     to (device-px buffer / DPR) so 1 canvas pixel maps to exactly 1
+     device pixel, with no scaling at all. The overlay just hugs that
+     canvas via display: inline-block + content-driven width. CSS size
+     ends up around ~111px at integer DPRs and a few px more at
+     fractional DPRs (1.5 → ~123, 2.5 → ~118). */
+  padding: 0;
+  display: none;
+  opacity: 1;
+  pointer-events: none;
+  background: transparent;
+  /* Each "dark" module renders as fully opaque white. Difference blend turns
+     the on-screen pixel into the inverse of whatever's underneath the QR,
+     so the code is always high-contrast against any slide color. The
+     background script reverses the same operation per dark-module pixel
+     to recover the original slide content in the captured frame. */
+  mix-blend-mode: difference;
+  isolation: auto;
+}
+
+.slidesync-qr-overlay[data-active="true"] {
+  display: block;
+}
+
+/* Asymmetric inset: hug the side edge (slides rarely have content
+   pressed against the left/right edge), but lift well off the top/
+   bottom where headers, footers, page numbers and logos commonly live. */
+.slidesync-qr-overlay[data-position="top-left"]      { top: 8vh;    left: 1.5vw;  }
+.slidesync-qr-overlay[data-position="top-right"]     { top: 8vh;    right: 1.5vw; }
+.slidesync-qr-overlay[data-position="bottom-left"]   { bottom: 8vh; left: 1.5vw;  }
+.slidesync-qr-overlay[data-position="bottom-right"]  { bottom: 8vh; right: 1.5vw; }
+
+.slidesync-qr-overlay .slidesync-qr-canvas {
+  display: flex;
+  justify-content: center;
+}
+
+.slidesync-qr-overlay .slidesync-qr-canvas {
+  display: block;
+}
+
+.slidesync-qr-overlay .slidesync-qr-canvas canvas {
+  display: block;
+  background: transparent;
+  /* Inline width/height set by JS at (canvas-buffer-px / DPR). With
+     buffer sized to integer device pixels, browser does no scaling at
+     all on screen. Pixelated is a belt-and-suspenders hint for any
+     residual rounding. */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }

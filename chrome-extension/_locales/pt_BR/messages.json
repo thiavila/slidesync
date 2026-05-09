@@ -15,5 +15,16 @@
   "presentButtonAria": { "message": "Apresentar com slidesync" },
   "inspiredBy": { "message": "Inspirado por" },
   "sponsorMessage": { "message": "Manter o slidesync custa cerca de $$10/mês. Se ele tem sido útil nas suas apresentações, qualquer contribuição faz toda a diferença." },
-  "sponsorCta": { "message": "Seja um patrocinador" }
+  "sponsorCta": { "message": "Seja um patrocinador" },
+  "qrCodeLabel": { "message": "QR code" },
+  "qrColorOff": { "message": "Desligado" },
+  "qrCodeOn": { "message": "Ativo" },
+  "qrWarning": { "message": "Pode deixar uma leve marca nos slides." },
+  "qrColorBlack": { "message": "Preto" },
+  "qrColorWhite": { "message": "Branco" },
+  "qrPositionLabel": { "message": "Posicao" },
+  "qrPositionTopLeft": { "message": "Sup. esquerda" },
+  "qrPositionTopRight": { "message": "Sup. direita" },
+  "qrPositionBottomLeft": { "message": "Inf. esquerda" },
+  "qrPositionBottomRight": { "message": "Inf. direita" }
 }
