@@ -433,13 +433,13 @@
   display: block;
 }
 
-/* Inset 4% of the viewport on each side so the QR sits comfortably inside
-   the slide instead of hugging the bezel. 4vw/4vh scales nicely from
-   tight 1080p to ultrawide setups; ~77px on a 1920-wide viewport. */
-.slidesync-qr-overlay[data-position="top-left"]      { top: 4vh;    left: 4vw;  }
-.slidesync-qr-overlay[data-position="top-right"]     { top: 4vh;    right: 4vw; }
-.slidesync-qr-overlay[data-position="bottom-left"]   { bottom: 4vh; left: 4vw;  }
-.slidesync-qr-overlay[data-position="bottom-right"]  { bottom: 4vh; right: 4vw; }
+/* Inset 6% of the viewport on each side. Pushes the QR a bit further
+   into the slide so it clears typical corner content (logos, page
+   numbers, footer text). ~115 px on a 1920-wide viewport. */
+.slidesync-qr-overlay[data-position="top-left"]      { top: 6vh;    left: 6vw;  }
+.slidesync-qr-overlay[data-position="top-right"]     { top: 6vh;    right: 6vw; }
+.slidesync-qr-overlay[data-position="bottom-left"]   { bottom: 6vh; left: 6vw;  }
+.slidesync-qr-overlay[data-position="bottom-right"]  { bottom: 6vh; right: 6vw; }
 
 .slidesync-qr-overlay .slidesync-qr-canvas {
   display: flex;
