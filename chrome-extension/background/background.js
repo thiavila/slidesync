@@ -54,7 +54,10 @@ async function handleCaptureSlide(message, sender) {
   const imageData = await new Promise((resolve) => {
     chrome.tabs.captureVisibleTab(
       sender.tab.windowId,
-      { format: "jpeg", quality: 70 },
+      // Quality bumped to 90 so JPEG DCT ringing around the high-contrast
+      // QR module edges stays small enough that the inversion math doesn't
+      // leak a visible ghost into the patched frame.
+      { format: "jpeg", quality: 90 },
       (data) => {
         if (chrome.runtime.lastError) {
           console.warn("[slidesync] Capture error:", chrome.runtime.lastError.message);
@@ -169,7 +172,7 @@ async function patchQRArea(jpegDataUrl, qrRect) {
 }
 
 async function canvasToDataUrl(canvas) {
-  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.7 });
+  const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.9 });
   return await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(reader.error);

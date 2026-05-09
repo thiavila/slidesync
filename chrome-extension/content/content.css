@@ -409,7 +409,12 @@
 .slidesync-qr-overlay {
   position: fixed;
   z-index: 99997;
-  width: 132px;
+  /* 148 = 37 modules × 4 px per module. The lib draws each module at
+     k*(width/N) so when width/N is an integer there's no fractional
+     positioning, no overlap between adjacent modules, no anti-aliasing
+     halo — and the patcher's cell boundaries line up exactly with the
+     rendered module boundaries, killing the QR ghost cleanly. */
+  width: 148px;
   padding: 0;
   display: none;
   opacity: 1;
@@ -444,4 +449,9 @@
   width: 100%;
   height: auto;
   background: transparent;
+  /* Don't smooth when DPR upscales the buffer to device pixels. We want
+     each canvas pixel to map to a clean nxn block of device pixels so
+     the captured frame has crisp module boundaries. */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
