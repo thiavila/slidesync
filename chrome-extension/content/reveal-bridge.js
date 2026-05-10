@@ -90,6 +90,20 @@
     }
   });
 
+  // React to storage changes from any source: in-drawer click, popup,
+  // other tab. Same path for every origin — single source of truth.
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local") return;
+    let needsRender = false;
+    let settingsChanged = false;
+    if (changes.qrEnabled)  { qrEnabled = !!changes.qrEnabled.newValue; needsRender = true; settingsChanged = true; }
+    if (changes.qrPosition) { qrPosition = changes.qrPosition.newValue || "top-right"; needsRender = true; settingsChanged = true; }
+    if (changes.roomCode)   { activeRoomCode = changes.roomCode.newValue || null; needsRender = true; }
+    if (changes.isActive && !changes.isActive.newValue) { activeRoomCode = null; needsRender = true; }
+    if (settingsChanged) syncDrawerSettings();
+    if (needsRender) renderOverlayQR();
+  });
+
   // Key by horizontal/vertical only — fragment changes update the SAME
   // slide image instead of creating new entries. Each unique h-v is a
   // slide; fragments are progressive disclosure within that slide.
@@ -360,6 +374,29 @@
           <button primary id="slidesync-start">${msg("startSession")}</button>
           <button class="danger" id="slidesync-stop" style="display:none;">${msg("stopSession")}</button>
 
+          <div class="slidesync-settings" id="slidesync-settings">
+            <div class="slidesync-setting-label">${msg("qrCodeLabel")}</div>
+            <div class="slidesync-segmented" data-count="2" data-active-index="0" id="slidesync-qr-enabled-group">
+              <button type="button" class="slidesync-seg" data-value="off">${msg("qrColorOff")}</button>
+              <button type="button" class="slidesync-seg" data-value="on">${msg("qrCodeOn")}</button>
+            </div>
+            <div class="slidesync-segmented positions" data-count="4" data-active-index="1" id="slidesync-qr-position-group">
+              <button type="button" class="slidesync-seg" data-value="top-left" title="${msg("qrPositionTopLeft")}" aria-label="${msg("qrPositionTopLeft")}">
+                <span class="slidesync-pos-icon"><span class="slidesync-dot-tl"></span></span>
+              </button>
+              <button type="button" class="slidesync-seg" data-value="top-right" title="${msg("qrPositionTopRight")}" aria-label="${msg("qrPositionTopRight")}">
+                <span class="slidesync-pos-icon"><span class="slidesync-dot-tr"></span></span>
+              </button>
+              <button type="button" class="slidesync-seg" data-value="bottom-left" title="${msg("qrPositionBottomLeft")}" aria-label="${msg("qrPositionBottomLeft")}">
+                <span class="slidesync-pos-icon"><span class="slidesync-dot-bl"></span></span>
+              </button>
+              <button type="button" class="slidesync-seg" data-value="bottom-right" title="${msg("qrPositionBottomRight")}" aria-label="${msg("qrPositionBottomRight")}">
+                <span class="slidesync-pos-icon"><span class="slidesync-dot-br"></span></span>
+              </button>
+            </div>
+            <div class="slidesync-qr-warning" id="slidesync-qr-warning">${msg("qrWarning")}</div>
+          </div>
+
           <div class="slidesync-footer">
             <div class="slidesync-sponsor">
               ${msg("sponsorMessage")}
@@ -401,18 +438,59 @@
     document.getElementById("slidesync-start").addEventListener("click", startSession);
     document.getElementById("slidesync-stop").addEventListener("click", stopSession);
 
+    // QR overlay segmented controls — handlers only write to storage. The
+    // storage.onChanged listener (registered at IIFE top level) is what
+    // actually updates state + UI. This makes external changes (popup,
+    // other tab) flow through the same render path as in-drawer clicks.
+    document.querySelectorAll("#slidesync-qr-enabled-group .slidesync-seg").forEach((b) => {
+      b.addEventListener("click", () => {
+        chrome.storage.local.set({ qrEnabled: b.dataset.value === "on" });
+      });
+    });
+    document.querySelectorAll("#slidesync-qr-position-group .slidesync-seg").forEach((b) => {
+      b.addEventListener("click", () => {
+        chrome.storage.local.set({ qrPosition: b.dataset.value });
+      });
+    });
+
     // Show drawer briefly on load
     container.setAttribute("active", "");
     hideTimeout = setTimeout(() => {
       container.removeAttribute("active");
     }, 4000);
 
-    // Restore an active session if one exists (e.g., after page reload)
-    chrome.storage.local.get(["roomCode", "isActive"], (result) => {
-      if (result.isActive && result.roomCode) {
-        applyActiveUI(result.roomCode);
-      }
-    });
+    // Session/QR-state restore is performed once in init() (after both
+    // injectDrawer + injectQROverlay have run), via a single consolidated
+    // storage read — do not duplicate it here.
+  }
+
+  function syncDrawerSettings() {
+    const enabledValue = qrEnabled ? "on" : "off";
+    const enabledGroup = document.getElementById("slidesync-qr-enabled-group");
+    if (enabledGroup) {
+      let idx = 0;
+      enabledGroup.querySelectorAll(".slidesync-seg").forEach((b, i) => {
+        const isActive = b.dataset.value === enabledValue;
+        b.classList.toggle("active", isActive);
+        if (isActive) idx = i;
+      });
+      enabledGroup.setAttribute("data-active-index", String(idx));
+    }
+    const posGroup = document.getElementById("slidesync-qr-position-group");
+    if (posGroup) {
+      let idx = 0;
+      posGroup.querySelectorAll(".slidesync-seg").forEach((b, i) => {
+        const isActive = b.dataset.value === qrPosition;
+        b.classList.toggle("active", isActive);
+        if (isActive) idx = i;
+      });
+      posGroup.setAttribute("data-active-index", String(idx));
+    }
+    // Show the small "may leave a faint mark" warning only while the
+    // overlay is on. It's an inline note, not a toast — persistent
+    // while On so the user always knows what to expect.
+    const warning = document.getElementById("slidesync-qr-warning");
+    if (warning) warning.style.display = qrEnabled ? "block" : "none";
   }
 
   function generateRoomCode() {
@@ -442,6 +520,7 @@
 
   function applyActiveUI(roomCode) {
     sessionActive = true;
+    activeRoomCode = roomCode;
     document.getElementById("slidesync-code").textContent = roomCode;
     document.getElementById("slidesync-dot").classList.remove("inactive");
     document.getElementById("slidesync-status").textContent = msg("statusActive");
@@ -454,10 +533,12 @@
       capture(lastIdx);
       scheduleHeartbeat();
     }
+    renderOverlayQR();
   }
 
   function applyInactiveUI() {
     sessionActive = false;
+    activeRoomCode = null;
     lastIdx = null;
     slideIndex = null;
     totalSlides = 0;
@@ -472,6 +553,7 @@
     if (settleTimer) clearTimeout(settleTimer);
     if (heartbeatTimer) clearTimeout(heartbeatTimer);
     updateSlideCounter(0, 0);
+    renderOverlayQR();
   }
 
   function startSession() {
@@ -499,6 +581,26 @@
   function init() {
     injectDrawer();
     injectQROverlay();
+
+    // Single consolidated storage read — hydrates session + QR-overlay
+    // state in one shot so syncDrawerSettings + renderOverlayQR see
+    // consistent values. applyActiveUI handles the session-DOM updates
+    // (including activeRoomCode = roomCode and renderOverlayQR()) so the
+    // trailing renderOverlayQR() here is mostly defensive for the
+    // inactive-session path.
+    chrome.storage.local.get(
+      ["roomCode", "isActive", "qrEnabled", "qrPosition"],
+      (result) => {
+        qrEnabled = !!result.qrEnabled;
+        qrPosition = result.qrPosition || "top-right";
+        if (result.isActive && result.roomCode) {
+          applyActiveUI(result.roomCode);
+        }
+        syncDrawerSettings();
+        renderOverlayQR();
+      },
+    );
+
     // Auto-fullscreen helpers — re-enter on click if user accidentally pressed Esc.
     let userInteracted = false;
     document.addEventListener("click", () => { userInteracted = true; }, { once: true });
