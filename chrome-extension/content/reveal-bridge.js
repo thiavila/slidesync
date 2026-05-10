@@ -42,6 +42,14 @@
   let sessionActive = false;
   let lastSlideShown = 0;
 
+  // Persistent QR overlay state (mirrors content.js v2.3.0 Google Slides path).
+  // Defaults: opt-in OFF, top-right. Hydrated from chrome.storage.local in init().
+  // activeRoomCode is an intentional third source of "is there a room?" signal
+  // alongside sessionActive and the DOM — don't try to unify in this plan.
+  let qrEnabled = false;
+  let qrPosition = "top-right";
+  let activeRoomCode = null;
+
   function reply(payload) {
     window.postMessage({ source: EXT_SOURCE, ...payload }, "*");
   }
@@ -131,7 +139,177 @@
     chrome.runtime.sendMessage({
       type: "capture-slide",
       slideNumber,
+      qrRect: getQRRect(),
     });
+  }
+
+  // ---- Persistent QR overlay -------------------------------------------
+  // Ported from content.js v2.3.0 initPresentMode. The overlay is painted
+  // in the parent document with mix-blend-mode: difference (CSS already
+  // shipped in content.css). It composites over the Reveal iframe in the
+  // parent stacking context, so no iframe-side hooks are needed.
+
+  // Compute the QR overlay's position as fractions of the viewport so the
+  // background script can map it onto the captured image (which has its
+  // own DPR-scaled dimensions) without us having to send any pixel math.
+  function getQRRect() {
+    if (!qrEnabled || !activeRoomCode) return null;
+    const overlay = document.getElementById("slidesync-qr-overlay");
+    if (!overlay) return null;
+    const r = overlay.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return null;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    if (vw === 0 || vh === 0) return null;
+    // Grab the actual rendered canvas pixels of the QR. This is what the
+    // browser composited onto the slide via mix-blend-mode: difference.
+    // Drawing the same image back over the captured frame with the same
+    // difference op cancels the blend — pixel-perfect, no matrix math,
+    // no cell alignment, no DPR juggling.
+    const cv = overlay.querySelector("canvas");
+    let maskDataUrl = null;
+    if (cv) {
+      try {
+        maskDataUrl = cv.toDataURL("image/png");
+      } catch (e) {
+        console.warn("[slidesync] toDataURL failed:", e);
+      }
+    }
+    return {
+      x: r.left / vw,
+      y: r.top / vh,
+      width: r.width / vw,
+      height: r.height / vh,
+      mask: maskDataUrl,
+    };
+  }
+
+  function injectQROverlay() {
+    const overlay = document.createElement("div");
+    overlay.className = "slidesync-qr-overlay";
+    overlay.id = "slidesync-qr-overlay";
+    overlay.setAttribute("data-color", "off");
+    overlay.setAttribute("data-position", "top-right");
+    overlay.innerHTML = `<div class="slidesync-qr-canvas" id="slidesync-qr-canvas"></div>`;
+    document.body.appendChild(overlay);
+  }
+
+  function renderOverlayQR() {
+    const overlay = document.getElementById("slidesync-qr-overlay");
+    if (!overlay) return;
+    overlay.setAttribute("data-position", qrPosition);
+
+    const canvas = document.getElementById("slidesync-qr-canvas");
+    if (!canvas) return;
+
+    if (!activeRoomCode || !qrEnabled) {
+      overlay.setAttribute("data-active", "false");
+      canvas.innerHTML = "";
+      return;
+    }
+    overlay.setAttribute("data-active", "true");
+
+    const sessionUrl = `${WEBAPP_URL}/session/${activeRoomCode}`;
+
+    canvas.innerHTML = "";
+    const cv = buildQRCanvas(sessionUrl);
+    if (cv) {
+      canvas.appendChild(cv);
+      console.log(
+        "[slidesync] QR rendered",
+        `buffer=${cv.width}x${cv.height} device px`,
+        `display=${cv.style.width}`,
+        `dpr=${window.devicePixelRatio}`,
+      );
+    } else {
+      console.warn("[slidesync] QR build failed");
+    }
+  }
+
+  // Build the QR mask canvas at exactly device pixel resolution. This is
+  // the key trick that makes the difference-blend cancellation exact on
+  // any DPR (including fractional 1.25/1.5/1.75): canvas internal buffer
+  // is sized to integer device pixels; CSS displays it at canvas/DPR so
+  // there's no on-screen scaling at all (1 canvas pixel = 1 device pixel).
+  // The patcher then draws the same canvas at the same device dimensions,
+  // also no scaling — both sides see identical 0/255 pixel values, and
+  // ||slide−qr|−qr| = slide cancels perfectly.
+  //
+  // Bonus: rendering manually (instead of letting the QR lib do it) lets
+  // us inset each dark module by 1 device pixel so the QR has airy gaps
+  // between modules — visually finer lines, same scan reliability.
+  function buildQRCanvas(text) {
+    const dpr = window.devicePixelRatio || 1;
+
+    // Use the lib only as an encoder — we extract the dark/light matrix
+    // and ignore the canvas it draws.
+    const tmp = document.createElement("div");
+    tmp.style.cssText = "position:absolute;left:-9999px;visibility:hidden;width:0;height:0;overflow:hidden";
+    document.body.appendChild(tmp);
+    let matrix = null;
+    try {
+      const qr = new QRCode(tmp, {
+        text,
+        width: 100,
+        height: 100,
+        correctLevel: QRCode.CorrectLevel.H,
+      });
+      const model = qr && qr._oQRCode;
+      if (model && typeof model.getModuleCount === "function" && typeof model.isDark === "function") {
+        const n = model.getModuleCount();
+        const m = new Array(n);
+        for (let r = 0; r < n; r++) {
+          const row = new Uint8Array(n);
+          for (let c = 0; c < n; c++) row[c] = model.isDark(r, c) ? 1 : 0;
+          m[r] = row;
+        }
+        matrix = m;
+      }
+    } catch (e) {
+      console.warn("[slidesync] QR encode failed:", e);
+    }
+    document.body.removeChild(tmp);
+    if (!matrix) return null;
+
+    const N = matrix.length;
+    // Aim for ~3 CSS px per module (= ~111 CSS px for N=37). Round
+    // pxPerModule to an integer in DEVICE px so each module lands on
+    // whole canvas pixels — required for the cancellation to stay exact.
+    const pxPerModule = Math.max(3, Math.round(3 * dpr));
+    const canvasSize = pxPerModule * N;
+    // Inset 1 device px when there's room, leaving a 1px gap between
+    // modules. Visually thinner lines without breaking phone scans
+    // (scanners read module centers; 1-px breathing room is fine for
+    // pxPerModule >= 5; below that we keep modules solid).
+    const inset = pxPerModule >= 5 ? 1 : 0;
+    const dotSize = pxPerModule - inset * 2;
+
+    const cv = document.createElement("canvas");
+    cv.width = canvasSize;
+    cv.height = canvasSize;
+    // Fractional CSS size is fine — the browser layouts to the float
+    // and getBoundingClientRect returns the float, so the patcher's
+    // rect math stays consistent.
+    const cssSize = canvasSize / dpr;
+    cv.style.width = cssSize + "px";
+    cv.style.height = cssSize + "px";
+
+    const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    for (let r = 0; r < N; r++) {
+      const row = matrix[r];
+      for (let c = 0; c < N; c++) {
+        if (row[c]) {
+          ctx.fillRect(
+            c * pxPerModule + inset,
+            r * pxPerModule + inset,
+            dotSize,
+            dotSize,
+          );
+        }
+      }
+    }
+    return cv;
   }
 
   function updateSlideCounter(current, total) {
@@ -320,6 +498,7 @@
 
   function init() {
     injectDrawer();
+    injectQROverlay();
     // Auto-fullscreen helpers — re-enter on click if user accidentally pressed Esc.
     let userInteracted = false;
     document.addEventListener("click", () => { userInteracted = true; }, { once: true });
