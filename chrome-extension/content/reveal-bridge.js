@@ -402,7 +402,7 @@
               ${msg("sponsorMessage")}
               <a href="https://github.com/sponsors/thiavila" target="_blank">&#9829; ${msg("sponsorCta")}</a>
             </div>
-            <div class="slidesync-version">slidesync · Reveal mode</div>
+            <div class="slidesync-version">slidesync v2.4 · Reveal mode</div>
           </div>
         </div>
       </div>
