@@ -177,7 +177,7 @@
                 ${msg("inspiredBy")} <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
                 by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
               </div>
-              <div class="slidesync-version">slidesync v2.3</div>
+              <div class="slidesync-version">slidesync v2.4</div>
             </div>
           </div>
         </div>
