@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import RevealFrame from "@/components/reveal-frame";
 import { detectExtension } from "@/lib/reveal/extension-bridge";
+import { getDeckHtml, setDeckHtml, clearDeckHtml } from "@/lib/reveal/deck-store";
 import { useTranslations } from "@/lib/i18n/use-translations";
 
-const STORAGE_KEY = "slidesync:reveal-html";
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/slidesync-real-time-slide/eaiabbeapnegmnlomeijfkomdejgcjof";
 
@@ -24,10 +24,19 @@ export default function PresentPage() {
   const { t } = useTranslations();
   const [html, setHtml] = useState<string | null>(null);
   const [ext, setExt] = useState<ExtState>({ status: "checking" });
+  const [restored, setRestored] = useState(false);
 
+  // Restore a previously-uploaded deck (survives reloads within the session).
+  // Async because it reads from IndexedDB; `restored` gates the first render
+  // so we never flash the upload view before the lookup resolves.
   useEffect(() => {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (stored) setHtml(stored);
+    let cancelled = false;
+    getDeckHtml().then((stored) => {
+      if (cancelled) return;
+      if (stored) setHtml(stored);
+      setRestored(true);
+    });
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -50,7 +59,7 @@ export default function PresentPage() {
         data?.source === "slidesync-extension" &&
         data?.type === "session-ended"
       ) {
-        sessionStorage.removeItem(STORAGE_KEY);
+        void clearDeckHtml();
         if (document.fullscreenElement) document.exitFullscreen?.();
         setHtml(null);
       }
@@ -59,7 +68,7 @@ export default function PresentPage() {
     return () => window.removeEventListener("message", handler);
   }, []);
 
-  if (ext.status === "checking") {
+  if (ext.status === "checking" || !restored) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gray-50">
         <p className="text-gray-500">{t("present.checkingExtension")}</p>
@@ -98,9 +107,13 @@ export default function PresentPage() {
     return (
       <UploadView
         onReady={(uploadedHtml) => {
-          sessionStorage.setItem(STORAGE_KEY, uploadedHtml);
-          tryFullscreen();
+          // Present from memory immediately; persistence is best-effort and
+          // must never block presenting (it no longer can hit a size quota).
           setHtml(uploadedHtml);
+          tryFullscreen();
+          void setDeckHtml(uploadedHtml).catch((e) => {
+            console.warn("Could not persist deck to IndexedDB:", e);
+          });
         }}
       />
     );
