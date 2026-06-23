@@ -26,5 +26,6 @@
   "qrPositionTopLeft": { "message": "ऊपर बायाँ" },
   "qrPositionTopRight": { "message": "ऊपर दायाँ" },
   "qrPositionBottomLeft": { "message": "नीचे बायाँ" },
-  "qrPositionBottomRight": { "message": "नीचे दायाँ" }
+  "qrPositionBottomRight": { "message": "नीचे दायाँ" },
+  "qrAdvanced": { "message": "उन्नत स्थिति" }
 }

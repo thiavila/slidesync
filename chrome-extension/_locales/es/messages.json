@@ -26,5 +26,6 @@
   "qrPositionTopLeft": { "message": "Sup. izquierda" },
   "qrPositionTopRight": { "message": "Sup. derecha" },
   "qrPositionBottomLeft": { "message": "Inf. izquierda" },
-  "qrPositionBottomRight": { "message": "Inf. derecha" }
+  "qrPositionBottomRight": { "message": "Inf. derecha" },
+  "qrAdvanced": { "message": "Posición avanzada" }
 }

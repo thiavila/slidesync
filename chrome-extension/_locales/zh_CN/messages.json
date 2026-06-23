@@ -26,5 +26,6 @@
   "qrPositionTopLeft": { "message": "左上" },
   "qrPositionTopRight": { "message": "右上" },
   "qrPositionBottomLeft": { "message": "左下" },
-  "qrPositionBottomRight": { "message": "右下" }
+  "qrPositionBottomRight": { "message": "右下" },
+  "qrAdvanced": { "message": "高级位置" }
 }

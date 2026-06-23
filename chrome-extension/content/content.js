@@ -25,6 +25,12 @@
     let hideTimeout = null;
     let qrEnabled = false;
     let qrPosition = "top-right";
+    // Custom precise position (0..100), proportional placement model: the QR's
+    // same-percentage point aligns with that percentage of the viewport, so
+    // 0/0 hugs top-left, 100/100 hugs bottom-right, 50/50 centers — never off
+    // screen. Used only when qrPosition === "custom". Persisted in storage.
+    let qrCustomX = 100;
+    let qrCustomY = 0;
     let activeRoomCode = null;
 
     function getSlideNumber() {
@@ -165,6 +171,24 @@
                   <span class="slidesync-pos-icon"><span class="slidesync-dot-br"></span></span>
                 </button>
               </div>
+              <button type="button" class="slidesync-adv-toggle" id="slidesync-qr-adv-toggle" aria-expanded="false">
+                <span class="slidesync-adv-caret">&#9654;</span> ${msg("qrAdvanced")}
+              </button>
+              <div class="slidesync-adv-panel" id="slidesync-qr-adv-panel" hidden>
+                <div class="slidesync-adv-thumb" id="slidesync-qr-thumb" title="${msg("qrAdvanced")}">
+                  <div class="slidesync-adv-marker" id="slidesync-qr-marker"></div>
+                </div>
+                <div class="slidesync-adv-fields">
+                  <div class="slidesync-adv-field">
+                    <label for="slidesync-qr-x">X</label>
+                    <input type="number" id="slidesync-qr-x" min="0" max="100" step="1" inputmode="numeric"><span class="slidesync-adv-unit">%</span>
+                  </div>
+                  <div class="slidesync-adv-field">
+                    <label for="slidesync-qr-y">Y</label>
+                    <input type="number" id="slidesync-qr-y" min="0" max="100" step="1" inputmode="numeric"><span class="slidesync-adv-unit">%</span>
+                  </div>
+                </div>
+              </div>
               <div class="slidesync-qr-warning" id="slidesync-qr-warning">${msg("qrWarning")}</div>
             </div>
 
@@ -177,7 +201,7 @@
                 ${msg("inspiredBy")} <a href="https://limhenry.xyz/slides/" target="_blank">Remote for Slides</a>
                 by <a href="https://limhenry.xyz/" target="_blank">Henry Lim</a>
               </div>
-              <div class="slidesync-version">slidesync v2.5</div>
+              <div class="slidesync-version">slidesync v2.6</div>
             </div>
           </div>
         </div>
@@ -222,6 +246,58 @@
         });
       });
 
+      // Advanced (custom) position — collapsible drag-pad + X/Y number inputs,
+      // kept in sync. Corner buttons only write to storage and let onChanged
+      // render; but a live drag needs immediate local feedback (a storage write
+      // per pointermove would be janky and hit write quotas), so we render
+      // locally on every move and persist once on release / on input commit.
+      const advToggle = document.getElementById("slidesync-qr-adv-toggle");
+      const advPanel = document.getElementById("slidesync-qr-adv-panel");
+      if (advToggle && advPanel) {
+        advToggle.addEventListener("click", () => {
+          const open = advPanel.hasAttribute("hidden");
+          advPanel.toggleAttribute("hidden", !open);
+          advToggle.setAttribute("aria-expanded", String(open));
+        });
+      }
+      const clampPct = (v) => Math.max(0, Math.min(100, v));
+      function applyCustomLocal() {
+        qrPosition = "custom";
+        renderOverlayQR();
+        syncDrawerSettings();
+      }
+      function persistCustom() {
+        chrome.storage.local.set({ qrPosition: "custom", qrCustomX, qrCustomY });
+      }
+      const xInput = document.getElementById("slidesync-qr-x");
+      const yInput = document.getElementById("slidesync-qr-y");
+      if (xInput) {
+        xInput.addEventListener("input", () => { qrCustomX = clampPct(parseFloat(xInput.value) || 0); applyCustomLocal(); });
+        xInput.addEventListener("change", persistCustom);
+      }
+      if (yInput) {
+        yInput.addEventListener("input", () => { qrCustomY = clampPct(parseFloat(yInput.value) || 0); applyCustomLocal(); });
+        yInput.addEventListener("change", persistCustom);
+      }
+      const thumb = document.getElementById("slidesync-qr-thumb");
+      const marker = document.getElementById("slidesync-qr-marker");
+      if (thumb && marker) {
+        let dragging = false;
+        const setFromPointer = (clientX, clientY) => {
+          const r = thumb.getBoundingClientRect();
+          const mw = marker.offsetWidth, mh = marker.offsetHeight;
+          const availX = r.width - mw, availY = r.height - mh;
+          qrCustomX = clampPct(availX > 0 ? ((clientX - r.left - mw / 2) / availX) * 100 : 0);
+          qrCustomY = clampPct(availY > 0 ? ((clientY - r.top - mh / 2) / availY) * 100 : 0);
+          applyCustomLocal();
+        };
+        thumb.addEventListener("pointerdown", (e) => { dragging = true; thumb.setPointerCapture(e.pointerId); setFromPointer(e.clientX, e.clientY); });
+        thumb.addEventListener("pointermove", (e) => { if (dragging) setFromPointer(e.clientX, e.clientY); });
+        const endDrag = () => { if (dragging) { dragging = false; persistCustom(); } };
+        thumb.addEventListener("pointerup", endDrag);
+        thumb.addEventListener("pointercancel", endDrag);
+      }
+
       container.setAttribute("active", "");
       hideTimeout = setTimeout(() => {
         container.removeAttribute("active");
@@ -254,6 +330,7 @@
         });
         enabledGroup.setAttribute("data-active-index", String(idx));
       }
+      const isCustom = qrPosition === "custom";
       const posGroup = document.getElementById("slidesync-qr-position-group");
       if (posGroup) {
         let idx = 0;
@@ -263,6 +340,24 @@
           if (isActive) idx = i;
         });
         posGroup.setAttribute("data-active-index", String(idx));
+        // When a custom position is active, no corner matches — fade out the
+        // sliding pill so the segmented control reads as "nothing selected".
+        posGroup.classList.toggle("no-active", isCustom);
+      }
+      // Reflect the custom slot in the advanced controls (marker + number
+      // inputs), and flag the toggle as active when custom is in use. Don't
+      // clobber an input the user is actively typing into.
+      const advToggle = document.getElementById("slidesync-qr-adv-toggle");
+      if (advToggle) advToggle.classList.toggle("active", isCustom);
+      const xInput = document.getElementById("slidesync-qr-x");
+      const yInput = document.getElementById("slidesync-qr-y");
+      if (xInput && document.activeElement !== xInput) xInput.value = String(Math.round(qrCustomX));
+      if (yInput && document.activeElement !== yInput) yInput.value = String(Math.round(qrCustomY));
+      const marker = document.getElementById("slidesync-qr-marker");
+      if (marker) {
+        marker.style.left = qrCustomX + "%";
+        marker.style.top = qrCustomY + "%";
+        marker.style.transform = `translate(${-qrCustomX}%, ${-qrCustomY}%)`;
       }
       // Show the small "may leave a faint mark" warning only while the
       // overlay is on. It's an inline note, not a toast — persistent
@@ -275,6 +370,25 @@
       const overlay = document.getElementById("slidesync-qr-overlay");
       if (!overlay) return;
       overlay.setAttribute("data-position", qrPosition);
+      if (qrPosition === "custom") {
+        // Proportional placement, pure CSS (no measurement, resize-proof):
+        // left = X% of the viewport, then translate by -X% of the QR's own
+        // size. At 0 the left edge sits at 0; at 100 the right edge meets the
+        // viewport right; 50 centers. getBoundingClientRect (used by getQRRect)
+        // already reports the post-transform rect, so capture stays aligned.
+        overlay.style.left = qrCustomX + "%";
+        overlay.style.top = qrCustomY + "%";
+        overlay.style.right = "";
+        overlay.style.bottom = "";
+        overlay.style.transform = `translate(${-qrCustomX}%, ${-qrCustomY}%)`;
+      } else {
+        // Hand positioning back to the corner CSS rules.
+        overlay.style.left = "";
+        overlay.style.top = "";
+        overlay.style.right = "";
+        overlay.style.bottom = "";
+        overlay.style.transform = "";
+      }
 
       const canvas = document.getElementById("slidesync-qr-canvas");
       if (!canvas) return;
@@ -480,10 +594,12 @@
     injectQROverlay();
 
     chrome.storage.local.get(
-      ["roomCode", "isActive", "qrEnabled", "qrPosition"],
+      ["roomCode", "isActive", "qrEnabled", "qrPosition", "qrCustomX", "qrCustomY"],
       (result) => {
         qrEnabled = !!result.qrEnabled;
         qrPosition = result.qrPosition || "top-right";
+        if (typeof result.qrCustomX === "number") qrCustomX = result.qrCustomX;
+        if (typeof result.qrCustomY === "number") qrCustomY = result.qrCustomY;
 
         if (result.isActive && result.roomCode) {
           activeRoomCode = result.roomCode;
@@ -496,6 +612,14 @@
         }
         syncDrawerSettings();
         renderOverlayQR();
+        // If the saved position is custom, open the advanced panel so the
+        // restored drag-pad + values are visible without an extra click.
+        if (qrPosition === "custom") {
+          const advPanel = document.getElementById("slidesync-qr-adv-panel");
+          const advToggle = document.getElementById("slidesync-qr-adv-toggle");
+          if (advPanel) advPanel.removeAttribute("hidden");
+          if (advToggle) advToggle.setAttribute("aria-expanded", "true");
+        }
       },
     );
 
@@ -505,6 +629,8 @@
       let settingsChanged = false;
       if (changes.qrEnabled) { qrEnabled = !!changes.qrEnabled.newValue; needsRender = true; settingsChanged = true; }
       if (changes.qrPosition) { qrPosition = changes.qrPosition.newValue || "top-right"; needsRender = true; settingsChanged = true; }
+      if (changes.qrCustomX) { if (typeof changes.qrCustomX.newValue === "number") qrCustomX = changes.qrCustomX.newValue; needsRender = true; settingsChanged = true; }
+      if (changes.qrCustomY) { if (typeof changes.qrCustomY.newValue === "number") qrCustomY = changes.qrCustomY.newValue; needsRender = true; settingsChanged = true; }
       if (changes.roomCode) { activeRoomCode = changes.roomCode.newValue || null; needsRender = true; }
       if (changes.isActive && !changes.isActive.newValue) { activeRoomCode = null; needsRender = true; }
       if (settingsChanged) syncDrawerSettings();

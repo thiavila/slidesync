@@ -473,3 +473,107 @@
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
+
+/* ===== Advanced (custom) QR position: collapsible drag-pad + X/Y inputs =====
+   Position model is proportional (set inline by JS): left = X% of the area,
+   then translate -X% of the element's own size, so 0/0 hugs the top-left,
+   100/100 the bottom-right, 50/50 centers — and it never spills outside. */
+
+/* When a custom position is active, no corner is selected — hide the pill. */
+.slidesync-drawer .slidesync-segmented.no-active::before { opacity: 0; }
+
+.slidesync-drawer .slidesync-adv-toggle {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #666;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  padding: 6px;
+  margin: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  opacity: 1;
+}
+.slidesync-drawer .slidesync-adv-toggle:hover { background: rgba(0, 0, 0, 0.04); color: #333; }
+.slidesync-drawer .slidesync-adv-toggle.active { color: #0D95EC; }
+.slidesync-drawer .slidesync-adv-caret {
+  font-size: 9px;
+  display: inline-block;
+  transition: transform 200ms ease;
+}
+.slidesync-drawer .slidesync-adv-toggle[aria-expanded="true"] .slidesync-adv-caret { transform: rotate(90deg); }
+
+.slidesync-drawer .slidesync-adv-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px 2px 4px;
+}
+.slidesync-drawer .slidesync-adv-panel[hidden] { display: none; }
+
+.slidesync-drawer .slidesync-adv-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  background: linear-gradient(135deg, #fdf6ec, #e9f1ff 55%, #e7fbf2);
+  cursor: crosshair;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.slidesync-drawer .slidesync-adv-marker {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 3px;
+  background: #222;
+  box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: grab;
+  /* left / top / transform are set inline by JS (proportional model) */
+}
+.slidesync-drawer .slidesync-adv-marker:active { cursor: grabbing; }
+
+.slidesync-drawer .slidesync-adv-fields {
+  display: flex;
+  gap: 10px;
+}
+.slidesync-drawer .slidesync-adv-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.slidesync-drawer .slidesync-adv-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+}
+.slidesync-drawer .slidesync-adv-field input[type="number"] {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  padding: 7px 8px;
+  margin: 0;
+  font-family: 'Google Sans', sans-serif;
+  font-size: 14px;
+  color: #222;
+  text-align: right;
+}
+.slidesync-drawer .slidesync-adv-field input[type="number"]:focus {
+  outline: none;
+  border-color: #33AEFE;
+  box-shadow: 0 0 0 2px rgba(51, 174, 254, 0.18);
+}
+.slidesync-drawer .slidesync-adv-unit { font-size: 12px; color: #999; }
