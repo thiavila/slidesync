@@ -36,7 +36,6 @@
   "viewer.waiting": "Waiting for the presenter to start the presentation...",
   "viewer.annotateSlides": "Annotate slides",
   "viewer.exitAnnotation": "Exit annotation mode",
-  "viewer.followLive": "Follow live presentation",
   "viewer.textPlaceholder": "Type here...",
   "viewer.clearConfirm": "Clear all annotations on this slide?",
   "download.preparing": "Preparing...",

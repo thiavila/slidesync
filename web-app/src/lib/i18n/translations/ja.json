@@ -36,7 +36,6 @@
   "viewer.waiting": "発表者がプレゼンテーションを開始するのを待っています...",
   "viewer.annotateSlides": "スライドに注釈",
   "viewer.exitAnnotation": "注釈モードを終了",
-  "viewer.followLive": "ライブプレゼンを追従",
   "viewer.textPlaceholder": "ここに入力...",
   "viewer.clearConfirm": "このスライドのすべての注釈を消去しますか？",
   "download.preparing": "準備中...",

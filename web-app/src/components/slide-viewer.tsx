@@ -12,13 +12,36 @@ interface SlideViewerProps {
   roomCode: string;
 }
 
-const IDLE_TIMEOUT = 30_000;
+// How close to the end of the page counts as "at the last slide" (CSS px).
+const BOTTOM_THRESHOLD = 100;
+
+// How long a programmatic smooth scroll is allowed to run before we start
+// trusting scroll positions again.
+const SCROLL_SETTLE = 1_000;
+
+// Grace period after a gesture interrupts a scroll, before re-reading position.
+const GESTURE_SETTLE = 250;
+
+// Bottom of what the user actually sees, in document coordinates.
+// visualViewport accounts for pinch-zoom: zoomed into the middle of a slide
+// means the visible bottom is far from the end of the page.
+function isNearBottom(): boolean {
+  const vv = window.visualViewport;
+  const visibleBottom =
+    window.scrollY + (vv ? vv.offsetTop + vv.height : window.innerHeight);
+  return document.documentElement.scrollHeight - visibleBottom <= BOTTOM_THRESHOLD;
+}
 
 export default function SlideViewer({ slides, currentSlide, roomCode }: SlideViewerProps) {
   const { t } = useTranslations();
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [autoFollow, setAutoFollow] = useState(true);
-  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-follow is not a mode the user toggles — it is simply "is the viewer
+  // parked at the end of the page". Kept in a ref because it has to be read as
+  // it was *before* a new slide grew the page.
+  const followRef = useRef(true);
+  const programmaticRef = useRef(false);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Annotation state
   const [annotationMode, setAnnotationMode] = useState(false);
@@ -59,48 +82,87 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
     return null;
   };
 
-  // User interacted → pause auto-follow, restart idle timer
-  const handleUserInteraction = useCallback(() => {
-    setAutoFollow(false);
+  const scrollToBottom = useCallback((smooth = true) => {
+    programmaticRef.current = true;
+    if (settleTimer.current) clearTimeout(settleTimer.current);
+    settleTimer.current = setTimeout(() => {
+      programmaticRef.current = false;
+      // followRef still true means no scroll event ever arrived — either the
+      // smooth scroll was a no-op or it fell short. Snap to the end.
+      if (followRef.current && !isNearBottom()) {
+        bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
+      }
+      followRef.current = isNearBottom();
+    }, SCROLL_SETTLE);
 
-    if (idleTimer.current) clearTimeout(idleTimer.current);
-    idleTimer.current = setTimeout(() => {
-      setAutoFollow(true);
-    }, IDLE_TIMEOUT);
+    bottomRef.current?.scrollIntoView({
+      behavior: smooth ? "smooth" : "auto",
+      block: "end",
+    });
   }, []);
 
-  // Listen for scroll/touch interactions on the window
+  // Track whether the viewer is parked at the end of the page.
   useEffect(() => {
-    let lastScrollY = window.scrollY;
-
     const onScroll = () => {
-      if (window.scrollY < lastScrollY) {
-        handleUserInteraction();
-      }
-      lastScrollY = window.scrollY;
+      // Ignore the scroll events our own scrollIntoView generates.
+      if (programmaticRef.current) return;
+      followRef.current = isNearBottom();
     };
 
-    const onTouch = (e: TouchEvent) => {
-      if (annotationMode) return;
-      handleUserInteraction();
+    // A real gesture aborts any in-flight smooth scroll, in the browser and
+    // here. Where it leaves the page is only known once the gesture settles.
+    const onUserTakeover = () => {
+      programmaticRef.current = false;
+      if (settleTimer.current) clearTimeout(settleTimer.current);
+      settleTimer.current = setTimeout(() => {
+        followRef.current = isNearBottom();
+      }, GESTURE_SETTLE);
     };
 
-    window.addEventListener("scroll", onScroll);
-    window.addEventListener("touchstart", onTouch);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("touchstart", onUserTakeover, { passive: true });
+    window.addEventListener("wheel", onUserTakeover, { passive: true });
+    window.addEventListener("keydown", onUserTakeover);
+    window.visualViewport?.addEventListener("scroll", onScroll);
+    window.visualViewport?.addEventListener("resize", onScroll);
 
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("touchstart", onTouch);
-      if (idleTimer.current) clearTimeout(idleTimer.current);
+      window.removeEventListener("touchstart", onUserTakeover);
+      window.removeEventListener("wheel", onUserTakeover);
+      window.removeEventListener("keydown", onUserTakeover);
+      window.visualViewport?.removeEventListener("scroll", onScroll);
+      window.visualViewport?.removeEventListener("resize", onScroll);
+      if (settleTimer.current) clearTimeout(settleTimer.current);
     };
-  }, [handleUserInteraction, annotationMode]);
+  }, []);
 
-  // Auto-scroll to bottom when following
+  // New slide arrived → only follow if the viewer was already at the end.
   useEffect(() => {
-    if (autoFollow) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [currentSlide, slides, autoFollow]);
+    if (followRef.current) scrollToBottom();
+  }, [currentSlide, slides, scrollToBottom]);
+
+  // Slide images have no intrinsic height until they load, so the page keeps
+  // growing after the scroll. Re-anchor to the bottom while following.
+  // A callback ref, not an effect: the container only mounts once the first
+  // slide arrives, long after the initial "waiting" render.
+  const observerRef = useRef<ResizeObserver | null>(null);
+  const setContainer = useCallback(
+    (node: HTMLDivElement | null) => {
+      observerRef.current?.disconnect();
+      observerRef.current = null;
+      if (!node) return;
+
+      const observer = new ResizeObserver(() => {
+        if (followRef.current) scrollToBottom(false);
+      });
+      observer.observe(node);
+      observerRef.current = observer;
+    },
+    [scrollToBottom]
+  );
+
+  useEffect(() => () => observerRef.current?.disconnect(), []);
 
   if (visibleSlides.length === 0) {
     return (
@@ -111,7 +173,7 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
   }
 
   return (
-    <div id="slide-container" className="space-y-0.5">
+    <div id="slide-container" ref={setContainer} className="space-y-0.5">
       {visibleSlides.map(([slideNumber, imageData]) => (
         <div
           key={slideNumber}
@@ -170,19 +232,6 @@ export default function SlideViewer({ slides, currentSlide, roomCode }: SlideVie
             }
           }}
         />
-      )}
-
-      {!autoFollow && (
-        <button
-          onClick={() => {
-            setAutoFollow(true);
-            if (idleTimer.current) clearTimeout(idleTimer.current);
-            bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-          }}
-          className="fixed bottom-4 right-4 bg-brand text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium hover:bg-brand-dark transition z-50"
-        >
-          {t("viewer.followLive")}
-        </button>
       )}
     </div>
   );

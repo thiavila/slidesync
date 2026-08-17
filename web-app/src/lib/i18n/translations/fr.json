@@ -36,7 +36,6 @@
   "viewer.waiting": "En attente du présentateur pour démarrer la présentation...",
   "viewer.annotateSlides": "Annoter les diapositives",
   "viewer.exitAnnotation": "Quitter le mode annotation",
-  "viewer.followLive": "Suivre la présentation en direct",
   "viewer.textPlaceholder": "Tapez ici...",
   "viewer.clearConfirm": "Effacer toutes les annotations de cette diapositive ?",
   "download.preparing": "Préparation...",

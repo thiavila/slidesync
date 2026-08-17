@@ -36,7 +36,6 @@
   "viewer.waiting": "等待演示者开始演示...",
   "viewer.annotateSlides": "注释幻灯片",
   "viewer.exitAnnotation": "退出注释模式",
-  "viewer.followLive": "跟随实时演示",
   "viewer.textPlaceholder": "在此输入...",
   "viewer.clearConfirm": "清除此幻灯片上的所有注释？",
   "download.preparing": "准备中...",
